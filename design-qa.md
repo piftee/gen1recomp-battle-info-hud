@@ -1,0 +1,95 @@
+# Battle Info HUD design QA
+
+- source visual truth: `/var/folders/_f/5hxfvt8s7tnfcfx87lg2xcn00000gn/T/codex-clipboard-55e6a1aa-c559-485e-9524-59b32347ab51.png`
+- implementation screenshot: `/private/tmp/battle-info-hud-v05-qa/battle_info_hud_dramatic.png`
+- full-view comparison: `/private/tmp/battle-info-hud-v05-qa/full_comparison.png`
+- player HUD comparison: `/private/tmp/battle-info-hud-v05-qa/player_hud_comparison.png`
+- EXP detail evidence: `/private/tmp/battle-info-hud-v05-qa/player_exp_zoom.png`
+- viewport: 1024 × 768 desktop game window
+- source pixels/CSS size/density: 1024 × 768 at device density 1
+- implementation pixels/CSS size/density: 1024 × 768 at device density 1
+- normalization: no scale or density normalization; the focused comparison
+  uses the same 464 × 240 player-HUD crop from each 1024 × 768 image
+- state: Route 1 Dramatic Shape 1.7.2 wild battle; caught Pidgey; enemy `SLP`,
+  player `PSN`; player `20/29` HP and `272/469` EXP progress. Dramatic Shape's
+  background camera timing differs between captures, but the snapped HUD
+  viewport, content state, size and anchors are identical.
+
+## Findings
+
+No actionable P0, P1 or P2 mismatch remains against the three current
+annotations. The final capture changes the original HUD texture in place and
+does not introduce a second overlay or replacement panel.
+
+## Full-view comparison evidence
+
+The full before/after sheet shows the same 1024 × 768 battle state. The player
+panel retains its bottom and right anchors and the opponent panel remains in
+the original top-left position. The different 3D camera frame is an expected
+Dramatic Shape animation variation and does not change HUD geometry.
+
+## Focused comparison evidence
+
+- EXP track: the implementation expands the track from native `x=80..144` to
+  `x=64..144` and lowers it from `y=87` to `y=90`. The EXP detail visibly
+  seats the blue fill directly on the upper edge of the existing black rule.
+- EXP mark: `EXP` is now proportionally rendered at 75% native scale in an
+  18 × 6 pixel footprint. It remains readable but no longer dominates the
+  numeric row, closely matching the compact treatment of the HP mark.
+- Player alignment: name, status and HP mark now share native `x=80`; the
+  level remains at `x=112`, keeping `PSN` immediately to its left with a
+  consistent one-tile gap. The HP and EXP values terminate on the same
+  `x=144` right edge.
+
+## Required fidelity surfaces
+
+- Fonts and typography: passed. Every label and value uses the existing game
+  font; only the EXP mark is proportionally reduced with nearest-neighbour
+  rendering. Names, status, level and number markers retain native scale.
+- Spacing and layout rhythm: passed. The three player metadata rows now use
+  consistent left and right anchors, and the EXP strip fills the exact
+  available underline span without colliding with the curve or vertical edge.
+- Colors and visual tokens: passed. HP uses the engine's semantic green,
+  yellow and red renderer; EXP uses the established restrained blue fill over
+  the black native rule.
+- Image quality and asset fidelity: passed. The original HUD texture, HUD
+  tiles, font atlas and caught Poké Ball tile are reused with crisp
+  nearest-neighbour output; no substitute assets were introduced.
+- Copy and content: passed. `EXP`, current/required EXP, HP, status and level
+  remain unambiguous and simultaneously visible.
+
+## Comparison history
+
+1. Replacement-panel prototype — blocked.
+   - P1: new boxes obscured the battle and departed from Dramatic Shape's HUD.
+   - Fix: removed replacement panels and reused native HUD primitives.
+2. Late-overlay build — blocked.
+   - P1: additions remained in classic-screen coordinates after Dramatic Shape
+     snapped its HUD.
+   - Fix: edit Dramatic Shape's original HUD texture before its snap/scale.
+3. First texture-integrated build — blocked.
+   - P2: EXP text occupied the native curve and the caught marker sat against
+     the HP bar.
+   - Fix: extended the original player HUD upward for a dedicated EXP row.
+4. User-annotated 0.3.0 capture — blocked.
+   - P2: caught/status order was wrong; the EXP fill sat below the rule; the
+     player right stroke had a gap.
+   - Fix: reordered opponent metadata, moved the fill above the rule and
+     completed the native right edge.
+5. User-annotated 0.4.0 capture — blocked.
+   - P2: the EXP track was too short and high, the label was oversized and the
+     player metadata left edges were inconsistent.
+   - Fix: widened/lowered the track, reduced the native EXP mark, and aligned
+     the player name, status and HP mark.
+6. Final same-state focused comparison — passed.
+   - The focused HUD and EXP evidence visibly resolves all three annotations
+     with no remaining P0/P1/P2 issue.
+
+## Residual test gap
+
+Visual QA covered macOS and Dramatic Shape 1.7.2 at 1024 × 768. Automated
+tests cover WIDE rendering, the live option toggle, palette behavior,
+opponent ordering, panel expansion and texture/canvas restoration. Mobile and
+VR-specific placement were not visually sampled.
+
+final result: passed

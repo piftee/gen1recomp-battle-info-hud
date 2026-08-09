@@ -1,0 +1,27 @@
+return {
+  summary = "Optional battle information added to the existing native HUD.",
+  author = "ishhodaszi",
+  tags = { "ui", "quality-of-life", "cosmetic", "battle" },
+  differences = {
+    changed = {
+      "Player name, status and HP share one clean alignment grid",
+      "Player status sits left of level; opponent status sits to its right",
+      "The native HP meters use clear green, yellow and red states",
+      "The original player HUD grows upward for a dedicated EXP row",
+    },
+    added = {
+      "A compact EXP mark and full-width one-pixel strip with current and required values",
+      "The native Poké Ball tile in the opponent row for caught species",
+      "One BATTLE INFO on/off setting in the standard Options menu",
+    },
+    known = {
+      "Upstream Dramatic Shape, BATTLE ART VOXEL FORK and Dramaless Shape edit their original HUD texture before it is snapped",
+      "The existing HUD is enhanced in classic, WIDE and supported staged battle layouts",
+      "Uses engine_internals to draw with Gen1Recomp's font and HUD tiles",
+    },
+  },
+  credits = {
+    { who = "Gen1Recomp", for_ = "native mod API and battle renderer" },
+  },
+  compat = { engine = ">=0.0.0-dev <1.0.0", modApi = 2 },
+}

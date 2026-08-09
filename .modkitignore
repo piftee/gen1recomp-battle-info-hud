@@ -1,0 +1,6 @@
+tests/battle_info_hud_test.lua
+tests/preview_driver.lua
+tests/dramatic_preview_driver.lua
+design-qa.md
+.gitignore
+.github/

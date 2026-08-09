@@ -1,0 +1,23 @@
+{
+  "id": "battle_info_hud",
+  "name": "Battle Info HUD",
+  "version": "0.7.0",
+  "github": "piftee/gen1recomp-battle-info-hud",
+  "api": 2,
+  "entry": "main.lua",
+  "profile": "content",
+  "game_version": ">=0.0.0-dev <1.0.0",
+  "category": "UI",
+  "priority": 120,
+  "dependencies": [],
+  "optional_dependencies": [
+    "DRAMATIC_SHAPE",
+    "BATTLE_ART_VOXEL_FORK",
+    "DRAMALESS_SHAPE"
+  ],
+  "conflicts": [],
+  "incompatible": [],
+  "permissions": ["engine_internals"],
+  "experimental": false,
+  "description": "Optional native-HUD colour HP, slim EXP progress, caught markers and side-by-side status/level labels."
+}
