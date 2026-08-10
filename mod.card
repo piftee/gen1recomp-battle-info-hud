@@ -11,11 +11,14 @@ return {
     },
     added = {
       "A compact EXP mark and full-width one-pixel strip with current and required values",
-      "The native Poké Ball tile in the opponent row for caught species",
+      "The native Poké Ball tile directly beside the opponent name for caught species",
+      "Gender Mod 0.3.5 alignment for the raised player level row",
       "One BATTLE INFO on/off setting in the standard Options menu",
     },
     known = {
       "Upstream Dramatic Shape, BATTLE ART VOXEL FORK and Dramaless Shape edit their original HUD texture before it is snapped",
+      "Gender Mod keeps its own marker artwork and colour while Battle Info HUD supplies compatible battle coordinates",
+      "Voxel HUD capture keeps Gender Mod pixels isolated from native name and panel pixels",
       "The existing HUD is enhanced in classic, WIDE and supported staged battle layouts",
       "Uses engine_internals to draw with Gen1Recomp's font and HUD tiles",
     },

@@ -1,5 +1,24 @@
 # Changelog
 
+## 0.8.1 - 2026-08-10
+
+- Fixed the Gender Mod hand-off in staged voxel battles so its player marker
+  is captured from a clean temporary cell instead of copying native name or
+  panel pixels underneath it.
+- Removed that temporary cell before Dramatic Shape moves the HUD bands, so no
+  stray glyph or texture block can remain in the voxel view.
+- Preserved BATTLE ART VOXEL FORK's full colour-shadow treatment when the
+  enhanced HP, status and EXP rows are rebuilt.
+
+## 0.8.0 - 2026-08-10
+
+- Added direct compatibility with Gender Mod 0.3.5 so the player marker follows
+  the raised level row instead of overlapping the HP bar.
+- Kept gender markers visible alongside both level and status, and preserved
+  Gender Mod's authored marker pixels inside staged Dramatic Shape textures.
+- Moved the caught-species Poké Ball from the opponent's level row to a compact
+  position directly beside the Pokémon name in classic, WIDE and staged HUDs.
+
 ## 0.7.0 - 2026-08-09
 
 - Added full support for Gen1Recomp's normal classic 160×144 battle layout when

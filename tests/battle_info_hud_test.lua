@@ -217,8 +217,9 @@ T.same(seen.PSN, { value = "PSN", x = 236, y = 56 },
   "player status sits directly left of the native level")
 T.check(seen["10/" .. tostring(needed)] ~= nil,
   "EXP shows a compact current/required readout")
-T.same(sprites[1], { x = 60, y = 8 },
-  "the native caught ball occupies the former enemy-status position")
+T.same(sprites[1], {
+  x = 8 + Font.width(nativeWideCalls[1].enemyName) + 2, y = 8,
+}, "the native caught ball sits directly beside the wide opponent name")
 
 T.eq(#rectangles, 2, "EXP uses one narrow track and one narrow fill")
 T.same({ rectangles[1].x, rectangles[1].y, rectangles[1].w,
@@ -287,8 +288,8 @@ T.same(seen.SLP, { value = "SLP", x = 60, y = 8 },
   "staged enemy status sits right of its original level indicator")
 T.same(seen.PSN, { value = "PSN", x = 80, y = 56 },
   "staged player status aligns with the name and HP mark")
-T.same(sprites[1], { x = 8, y = 8 },
-  "the caught marker occupies the former staged enemy-status position")
+T.same(sprites[1], { x = 8 + Font.width(battle.enemy.name) + 2, y = 0 },
+  "the caught marker sits directly beside the staged opponent name")
 T.same({ rectangles[1].x, rectangles[1].y, rectangles[1].w,
     rectangles[1].h, rectangles[1].color[4] }, { 56, 48, 104, 48, 0 },
   "the stock five-row player HUD is cleared inside its own texture")
@@ -350,6 +351,8 @@ T.same(hpBars[2], {
 }, "classic player colour reuses its extended original HUD geometry")
 T.eq(#marks, 3,
   "classic HP and EXP colours survive the engine's palette-zone pass")
+T.same(sprites[1], { x = 8 + Font.width(battle.enemy.name) + 2, y = 0 },
+  "classic caught marker sits beside the opponent name rather than level")
 T.same({ rectangles[2].x, rectangles[2].y, rectangles[2].w,
     rectangles[2].h }, { 64, 90, 80, 1 },
   "classic EXP seats into the original player HUD's lower rule")
@@ -381,9 +384,11 @@ T.eq(#hpBars, 0, "OFF removes all classic HUD additions")
 rows[2].step(game, 1)
 
 local forkTextureArgs, forkFlipCalls = {}, {}
+local forkTextureProbe
 local fork = {
   hudTexture = function(_, ...)
     forkTextureArgs = { ... }
+    if forkTextureProbe then forkTextureProbe() end
     return "fork-layer"
   end,
   snapRects = function()
@@ -397,9 +402,10 @@ local fork = {
   end,
 }
 local forkHud = {
-  flipGlyphs = function(w, h, draw, inverted)
+  flipGlyphs = function(w, h, draw, inverted, inkOnly, colorShadow)
     forkFlipCalls[#forkFlipCalls + 1] = {
       w = w, h = h, inverted = inverted,
+      inkOnly = inkOnly, colorShadow = colorShadow,
     }
     draw()
   end,
@@ -417,12 +423,14 @@ battle.letterboxWhite = false
 Runtime.call("battle.overlay", function() end, battle)
 rectangles, texts, hpBars, marks, sprites, canvasCalls =
   {}, {}, {}, {}, {}, {}
-T.eq(fork.hudTexture(battle, 0, true, false), "fork-layer",
+T.eq(fork.hudTexture(battle, 0, true, false, true), "fork-layer",
   "a compatible fork keeps its original HUD texture result")
-T.same(forkTextureArgs, { 0, true, false },
+T.same(forkTextureArgs, { 0, true, false, true },
   "newer fork HUD contrast arguments pass through unchanged")
-T.same(forkFlipCalls[1], { w = 160, h = 144, inverted = false },
-  "fork additions reuse its white-on-dark glyph processor")
+T.same(forkFlipCalls[1], {
+  w = 160, h = 144, inverted = false,
+  inkOnly = nil, colorShadow = true,
+}, "fork additions reuse its complete colour-shadow glyph processor")
 local forkRects = fork.snapRects({ scale = 5, ly = 10 })
 T.same(forkRects.player, { 624, 240, 416, 192 },
   "fork player frost follows its independent band scale and placement")
@@ -437,6 +445,96 @@ T.same({ rectangles[5].x, rectangles[5].y, rectangles[5].w,
   "the dark fork restores the player semantic HP fill inside native outlines")
 T.check(rectangles[5].color[2] > 0.7 and rectangles[5].color[1] == 0,
   "the restored healthy fill remains green rather than contrast-flipped white")
+
+local genderOverlayCalls = {}
+local genderHud = {
+  classicGenderXY = function(side)
+    if side == "enemy" then return 24, 8 end
+    return 104, 64
+  end,
+  wideGenderXY = function(side)
+    if side == "enemy" then return 80, 8 end
+    return 256, 64
+  end,
+  drawOverlay = function(b)
+    genderOverlayCalls[#genderOverlayCalls + 1] = {
+      enemyStatus = b.enemy.shownStatus,
+      playerStatus = b.player.shownStatus,
+    }
+    return "gender-overlay"
+  end,
+}
+game.mods.exports.gender_mod = { BattleHUD = genderHud }
+battle.dramaticShapeShot = nil
+battle.letterboxWhite = true
+Runtime.call("battle.overlay", function() end, battle)
+local gx, gy = genderHud.classicGenderXY("player", battle.player.mon.level)
+T.same({ gx, gy }, { 104, 56 },
+  "Gender Mod player marker follows the raised classic level row")
+gx, gy = genderHud.wideGenderXY("player", battle.player.mon.level)
+T.same({ gx, gy }, { 256, 56 },
+  "Gender Mod player marker follows the raised wide level row")
+gx, gy = genderHud.classicGenderXY("enemy", battle.enemy.mon.level)
+T.same({ gx, gy }, { 24, 8 },
+  "Gender Mod opponent marker retains its native level-row position")
+T.eq(genderHud.drawOverlay(battle), "gender-overlay",
+  "Gender Mod overlay result is preserved by the compatibility bridge")
+T.same(genderOverlayCalls[1], {
+  enemyStatus = nil, playerStatus = nil,
+}, "Gender Mod sees both level slots even when status labels are present")
+T.eq(battle.enemy.shownStatus, "SLP",
+  "Gender compatibility restores opponent status after drawing")
+T.eq(battle.player.shownStatus, "PSN",
+  "Gender compatibility restores player status after drawing")
+
+rows[2].step(game, 1)
+gx, gy = genderHud.classicGenderXY("player", battle.player.mon.level)
+T.same({ gx, gy }, { 104, 64 },
+  "OFF restores Gender Mod's stock player coordinate")
+genderHud.drawOverlay(battle)
+T.same(genderOverlayCalls[2], {
+  enemyStatus = "SLP", playerStatus = "PSN",
+}, "OFF restores Gender Mod's native status suppression behavior")
+rows[2].step(game, 1)
+
+battle.dramaticShapeShot = { live = true }
+battle.letterboxWhite = false
+canvasCreates, canvasClears, compositeDraws, canvasCalls = {}, {}, {}, {}
+rectangles, texts, hpBars, marks, sprites = {}, {}, {}, {}, {}
+local stagedGenderXY
+forkTextureProbe = function()
+  stagedGenderXY = {
+    genderHud.classicGenderXY("player", battle.player.mon.level),
+  }
+end
+fork.hudTexture(battle, 0, true, false)
+forkTextureProbe = nil
+local copiedGender
+for _, call in ipairs(compositeDraws) do
+  if call.x == 104 and call.y == 56 and call.canvas == "fork-layer" then
+    copiedGender = call.drawable
+    break
+  end
+end
+T.same(stagedGenderXY, { 0, 87 },
+  "Gender Mod paints into a clean scratch cell during voxel capture")
+local clearedGenderScratch = false
+for _, rect in ipairs(rectangles) do
+  if rect.x == 0 and rect.y == 87 and rect.w == 9 and rect.h == 9
+      and rect.color[4] == 0 then
+    clearedGenderScratch = true
+    break
+  end
+end
+T.check(clearedGenderScratch,
+  "the temporary Gender Mod scratch cell is removed before band placement")
+T.check(copiedGender and copiedGender.width == 9
+    and copiedGender.height == 9,
+  "staged HUD preserves Gender Mod's 8px marker and fork shadow edge")
+T.same({ copiedGender and copiedGender.minFilter,
+    copiedGender and copiedGender.magFilter },
+  { "nearest", "nearest" },
+  "staged Gender Mod marker remains on the native pixel grid")
 
 Font.drawBox, Font.draw = realDrawBox, realDraw
 HudTiles.drawHPBar = realDrawHPBar

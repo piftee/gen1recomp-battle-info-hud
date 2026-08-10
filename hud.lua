@@ -9,6 +9,11 @@ return function(mod)
   local EXP_BLUE = { 42 / 255, 106 / 255, 208 / 255, 1 }
   local exposedStatuses = setmetatable({}, { __mode = "k" })
   local CAUGHT_ROW = { { hp = 1 } }
+  local GENDER_MOD_ID = "gender_mod"
+  local STAGED_GENDER_SCRATCH_X = 0
+  local STAGED_GENDER_SCRATCH_Y = 87
+  local STAGED_GENDER_CAPTURE_SIZE = 9
+  local stagedGenderCaptureDepth = 0
   local STAGED_COMPANIONS = {
     "DRAMATIC_SHAPE",
     "BATTLE_ART_VOXEL_FORK",
@@ -278,6 +283,12 @@ return function(mod)
     return tx * 8 + (count <= 2 and 16 or count <= 4 and 8 or 0)
   end
 
+  local function caughtBallX(name, x, maxNamePixels)
+    local label = maxNamePixels and fitName(name, maxNamePixels)
+      or tostring(name or "")
+    return x + Font.width(label) + 2
+  end
+
   local function drawPlayerUnderline(y)
     HudTiles.tile(0x73, 144, y - 16)
     HudTiles.tile(0x73, 144, y - 8)
@@ -324,7 +335,8 @@ return function(mod)
       drawStatusAfterLevel(battle, battle.enemy, 40, 8, 88)
       drawNativeHP(battle, battle.enemy, 2, 2, nil, 6, markColor, grayFill)
       if isCaught(battle, battle.enemy) then
-        drawCaughtBall(battle, 8, 8)
+        local x = nameX(1, battle.enemy.name)
+        drawCaughtBall(battle, caughtBallX(battle.enemy.name, x), 0)
       end
     end
     if playerVisible(battle) then
@@ -353,14 +365,15 @@ return function(mod)
         love.graphics.translate(hudShake, 0)
       end
       local battler = battle.enemy
+      local enemyName = fitName(battler.name, 48)
       love.graphics.setColor(0, 0, 0, 1)
       Font.drawBox(0, 0, 18, 4)
-      Font.draw(fitName(battler.name, 48), 8, 8)
+      Font.draw(enemyName, 8, 8)
       drawLevel(battler, 88, 8)
       drawStatusAfterLevel(battle, battler, 96, 8, 144)
       drawNativeHP(battle, battle.enemy, 1, 2, nil, 11)
       if isCaught(battle, battle.enemy) then
-        drawCaughtBall(battle, 60, 8)
+        drawCaughtBall(battle, caughtBallX(enemyName, 8), 8)
       end
       if hudShake ~= 0 then love.graphics.pop() end
     end
@@ -515,6 +528,129 @@ return function(mod)
     return result
   end
 
+  local function genderCompatibility(game)
+    local exports = game and game.mods and game.mods.exports
+    local api = exports and exports[GENDER_MOD_ID]
+    local hud = api and api.BattleHUD
+    if type(hud) ~= "table" then return nil, nil end
+    return api, hud
+  end
+
+  -- Gender Mod 0.3.5 anchors the player glyph to the stock level row at
+  -- y=64. Our player panel moves that level row to y=56, so teach its public
+  -- BattleHUD contract the new coordinate while this HUD is enabled. Its
+  -- overlay also normally hides the glyph whenever a status is present;
+  -- expose the level slot just for that draw because our layout shows both.
+  local function installGenderBridge(game)
+    local _, hud = genderCompatibility(game)
+    if not hud or hud.battleInfoHudCoordinatesV8 then return end
+
+    if type(hud.classicGenderXY) == "function" then
+      local originalClassicXY = hud.classicGenderXY
+      hud.classicGenderXY = function(side, level)
+        local x, y = originalClassicXY(side, level)
+        if setting() and side == "player" then
+          if stagedGenderCaptureDepth > 0 then
+            return STAGED_GENDER_SCRATCH_X, STAGED_GENDER_SCRATCH_Y
+          end
+          y = 56
+        end
+        return x, y
+      end
+    end
+
+    if type(hud.wideGenderXY) == "function" then
+      local originalWideXY = hud.wideGenderXY
+      hud.wideGenderXY = function(side, level)
+        local x, y = originalWideXY(side, level)
+        if setting() and side == "player" then y = 56 end
+        return x, y
+      end
+    end
+
+    if type(hud.drawOverlay) == "function" then
+      local originalOverlay = hud.drawOverlay
+      hud.drawOverlay = function(battle, ...)
+        if not setting() then return originalOverlay(battle, ...) end
+        local args = { ... }
+        local saved = {}
+        for _, battler in pairs({ battle and battle.enemy,
+            battle and battle.player }) do
+          if battler and battler.shownStatus then
+            saved[#saved + 1] = {
+              battler = battler, status = battler.shownStatus,
+            }
+            battler.shownStatus = nil
+          end
+        end
+        local result
+        local ok, err = xpcall(function()
+          result = originalOverlay(battle, unpack(args))
+        end, debug.traceback)
+        for i = #saved, 1, -1 do
+          saved[i].battler.shownStatus = saved[i].status
+        end
+        if not ok then error(err, 0) end
+        return result
+      end
+    end
+
+    hud.battleInfoHudCoordinatesV8 = true
+    mod.log:info("attached HUD coordinates to Gender Mod")
+  end
+
+  local genderCellLayer
+
+  local function withStagedGenderCapture(draw)
+    stagedGenderCaptureDepth = stagedGenderCaptureDepth + 1
+    local result
+    local ok, err = xpcall(function() result = draw() end, debug.traceback)
+    stagedGenderCaptureDepth = math.max(0, stagedGenderCaptureDepth - 1)
+    if not ok then error(err, 0) end
+    return result
+  end
+
+  local function captureStagedGenderCell(battle, layer)
+    local _, hud = genderCompatibility(battle and battle.game)
+    if not (hud and type(hud.classicGenderXY) == "function"
+        and hud.battleInfoHudCoordinatesV8
+        and playerVisible(battle)) then return nil end
+    local level = battle.player.mon and battle.player.mon.level or 1
+    local okXY, targetX, targetY = pcall(hud.classicGenderXY,
+      "player", level)
+    if not okXY or type(targetX) ~= "number"
+        or type(targetY) ~= "number" then
+      return nil
+    end
+
+    local g = love.graphics
+    if type(g.newCanvas) ~= "function" or type(g.clear) ~= "function"
+        or type(g.draw) ~= "function" or type(g.getCanvas) ~= "function"
+        or type(g.setCanvas) ~= "function" then return nil end
+    if not genderCellLayer then
+      -- The authored icon is 8x8. Dramatic Shape can add a one-pixel shadow
+      -- down/right while baking the HUD, so retain that ninth edge too.
+      local okCanvas, canvas = pcall(g.newCanvas,
+        STAGED_GENDER_CAPTURE_SIZE, STAGED_GENDER_CAPTURE_SIZE)
+      if not okCanvas or not canvas then return nil end
+      if type(canvas.setFilter) == "function" then
+        canvas:setFilter("nearest", "nearest")
+      end
+      genderCellLayer = canvas
+    end
+
+    local previous = g.getCanvas()
+    g.push("all")
+    g.setCanvas(genderCellLayer)
+    g.clear(0, 0, 0, 0)
+    g.setColor(1, 1, 1, 1)
+    g.draw(layer, -STAGED_GENDER_SCRATCH_X,
+      -STAGED_GENDER_SCRATCH_Y)
+    g.pop()
+    if previous then g.setCanvas(previous) else g.setCanvas() end
+    return genderCellLayer, targetX, targetY
+  end
+
   local function composeStagedTexture(battle, layer, inkPass)
     if not layer then return end
     local g = love.graphics
@@ -522,8 +658,22 @@ return function(mod)
       return
     end
     local previous = g.getCanvas()
+    local genderCell, genderX, genderY =
+      captureStagedGenderCell(battle, layer)
     g.push("all")
     g.setCanvas(layer)
+    if genderCell then
+      -- Gender Mod originally paints into a clean scratch cell so rebuilding
+      -- the player HUD cannot copy name, underline or panel pixels along with
+      -- its authored icon. Remove that staging cell before the band is moved.
+      if type(g.setBlendMode) == "function" then
+        g.setBlendMode("replace", "premultiplied")
+      end
+      g.setColor(0, 0, 0, 0)
+      g.rectangle("fill", STAGED_GENDER_SCRATCH_X,
+        STAGED_GENDER_SCRATCH_Y, STAGED_GENDER_CAPTURE_SIZE,
+        STAGED_GENDER_CAPTURE_SIZE)
+    end
     if type(g.setBlendMode) == "function" then g.setBlendMode("alpha") end
     if inkPass then
       -- Some Dramatic Shape forks bake white-on-dark HUD ink through a
@@ -535,6 +685,10 @@ return function(mod)
       drawStagedSemanticHpFills(battle)
     else
       drawStagedHudContent(battle, false, false)
+    end
+    if genderCell then
+      g.setColor(1, 1, 1, 1)
+      g.draw(genderCell, genderX, genderY)
     end
     g.pop()
     if previous then g.setCanvas(previous) else g.setCanvas() end
@@ -592,8 +746,11 @@ return function(mod)
       if not setting() then
         return innerHudTexture(liveBattle, unpack(args))
       end
-      local layer = withNativeLevels(liveBattle, false, function()
-        return innerHudTexture(liveBattle, unpack(args))
+      installGenderBridge(liveBattle.game)
+      local layer = withStagedGenderCapture(function()
+        return withNativeLevels(liveBattle, false, function()
+          return innerHudTexture(liveBattle, unpack(args))
+        end)
       end)
       local inkPass
       if args[2] == true then
@@ -601,7 +758,8 @@ return function(mod)
         if okHud and battleHud
             and type(battleHud.flipGlyphs) == "function" then
           inkPass = function(draw)
-            return battleHud.flipGlyphs(160, 144, draw, args[3])
+            return battleHud.flipGlyphs(160, 144, draw, args[3], nil,
+              args[4])
           end
         end
       end
@@ -619,10 +777,12 @@ return function(mod)
   end
 
   mod.events:on("game.ready", function(ev)
+    installGenderBridge(ev and ev.game)
     installDramaticBridges(ev and ev.game)
   end)
 
   mod.hooks:wrap("battle.overlay", function(next, battle)
+    installGenderBridge(battle and battle.game)
     local layout = layoutFor(battle)
     if not layout then return next(battle) end
     if layout == "staged" then

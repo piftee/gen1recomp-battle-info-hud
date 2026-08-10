@@ -22,6 +22,7 @@ return function(game)
   player.name = "NORBIE"
   player.hp = math.max(1, math.floor(player.stats.hp * 0.72))
   player.status = "PSN"
+  player.gender_mod = "F"
   local def = game.data.pokemon[player.species]
   local floorExp = Growth.expForLevel(def.growthRate, player.level,
     game.data.growth_rates)
@@ -36,6 +37,7 @@ return function(game)
   while game.stack:top() do game.stack:pop() end
   local battle = BattleState.newWild(game, "PIDGEY", 3,
     { onFinish = function() end })
+  battle.enemy.mon.gender_mod = "F"
   game.stack:push(battle)
   U.wait(8)
   battle.introSlide = 0
@@ -54,7 +56,10 @@ return function(game)
 
   battle.dramaticShapeShot = nil
   U.wait(12)
-  U.log("PASS no-companion classic HUD enhancement prepared")
+  local gender = game.mods and game.mods.exports
+    and game.mods.exports.gender_mod
+  U.log(gender and "PASS Gender Mod compatibility is active"
+    or "PASS no-companion classic HUD enhancement prepared")
   U.shot(game, DIR .. "/battle_info_hud_classic.png")
 
   game.save.options.battleLayout = "wide"

@@ -1,7 +1,7 @@
 {
   "id": "battle_info_hud",
   "name": "Battle Info HUD",
-  "version": "0.7.0",
+  "version": "0.8.1",
   "github": "piftee/gen1recomp-battle-info-hud",
   "api": 2,
   "entry": "main.lua",
@@ -13,7 +13,8 @@
   "optional_dependencies": [
     "DRAMATIC_SHAPE",
     "BATTLE_ART_VOXEL_FORK",
-    "DRAMALESS_SHAPE"
+    "DRAMALESS_SHAPE",
+    "gender_mod"
   ],
   "conflicts": [],
   "incompatible": [],
