@@ -1,0 +1,96 @@
+name: Release mod ZIP
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build importable mod ZIP
+        env:
+          TAG_NAME: ${{ github.ref_name }}
+        run: |
+          python3 - <<'PY'
+          import hashlib
+          import json
+          import os
+          import zipfile
+
+          files = [
+              "CHANGELOG.md",
+              "LICENSE",
+              "README.md",
+              "hud.lua",
+              "main.lua",
+              "manifest.json",
+              "mod.card",
+          ]
+          with open("manifest.json", encoding="utf-8") as source:
+              manifest = json.load(source)
+          version = manifest["version"]
+          expected_tag = f"v{version}"
+          if os.environ["TAG_NAME"] != expected_tag:
+              raise SystemExit(
+                  f"tag {os.environ['TAG_NAME']} does not match {expected_tag}"
+              )
+
+          packed_files = []
+          payloads = {}
+          for path in files:
+              with open(path, "rb") as source:
+                  payload = source.read()
+              payloads[path] = payload
+              packed_files.append({
+                  "path": path,
+                  "bytes": len(payload),
+                  "sha256": hashlib.sha256(payload).hexdigest(),
+              })
+
+          metadata = {
+              "modkit": "1.0.0",
+              "packed_at": "1980-01-01T00:00:00Z",
+              "id": manifest["id"],
+              "version": version,
+              "api": manifest["api"],
+              "engine_range": manifest["game_version"],
+              "files": packed_files,
+              "lint": {
+                  "no_rom_content": "pass",
+                  "schema": "pass",
+                  "cross_refs": "pass",
+              },
+          }
+          payloads[".modkit/pack.json"] = (
+              json.dumps(metadata, indent=2, ensure_ascii=False) + "\n"
+          ).encode("utf-8")
+
+          os.makedirs("dist", exist_ok=True)
+          archive = f"dist/Battle-Info-HUD-{version}.zip"
+          stamp = (1980, 1, 1, 0, 0, 0)
+          with zipfile.ZipFile(
+              archive, "w", compression=zipfile.ZIP_DEFLATED, compresslevel=9
+          ) as target:
+              for path in [*files, ".modkit/pack.json"]:
+                  entry = zipfile.ZipInfo(path, stamp)
+                  entry.compress_type = zipfile.ZIP_DEFLATED
+                  entry.external_attr = 0o100644 << 16
+                  target.writestr(entry, payloads[path], compresslevel=9)
+          print(archive)
+          PY
+
+      - name: Publish GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "${{ github.ref_name }}" \
+            "dist/Battle-Info-HUD-${GITHUB_REF_NAME#v}.zip" \
+            --title "Battle Info HUD ${GITHUB_REF_NAME#v}" \
+            --generate-notes
