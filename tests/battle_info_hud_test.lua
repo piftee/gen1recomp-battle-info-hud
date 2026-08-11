@@ -217,6 +217,17 @@ T.same(seen.PSN, { value = "PSN", x = 236, y = 56 },
   "player status sits directly left of the native level")
 T.check(seen["10/" .. tostring(needed)] ~= nil,
   "EXP shows a compact current/required readout")
+local expGlyphs = {}
+for _, call in ipairs(texts) do
+  if call.value == "E" or call.value == "X" or call.value == "P" then
+    expGlyphs[#expGlyphs + 1] = call
+  end
+end
+T.same(expGlyphs, {
+  { value = "E", x = 192, y = 80 },
+  { value = "X", x = 199, y = 80 },
+  { value = "P", x = 206, y = 80 },
+}, "EXP uses unscaled native glyphs on integer pixel coordinates")
 T.same(sprites[1], {
   x = 8 + Font.width(nativeWideCalls[1].enemyName) + 2, y = 8,
 }, "the native caught ball sits directly beside the wide opponent name")

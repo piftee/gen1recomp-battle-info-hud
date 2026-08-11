@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.8.2 - 2026-08-11
+
+- Replaced the fractionally scaled EXP label with the game's original native
+  font glyphs drawn on whole-number pixel coordinates.
+- Gave the three letters compact integer spacing so they remain crisp and
+  distinct beside the full-size EXP values in classic, WIDE and staged voxel
+  layouts.
+
 ## 0.8.1 - 2026-08-10
 
 - Fixed the Gender Mod hand-off in staged voxel battles so its player marker

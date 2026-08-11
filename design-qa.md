@@ -33,9 +33,9 @@ Dramatic Shape animation variation and does not change HUD geometry.
 - EXP track: the implementation expands the track from native `x=80..144` to
   `x=64..144` and lowers it from `y=87` to `y=90`. The EXP detail visibly
   seats the blue fill directly on the upper edge of the existing black rule.
-- EXP mark: `EXP` is now proportionally rendered at 75% native scale in an
-  18 × 6 pixel footprint. It remains readable but no longer dominates the
-  numeric row, closely matching the compact treatment of the HP mark.
+- EXP mark: `EXP` now uses three untouched native 8 × 8 glyph tiles at integer
+  coordinates with a seven-pixel advance. It remains compact beside the
+  numeric row without fractional scaling or overlapping strokes.
 - Player alignment: name, status and HP mark now share native `x=80`; the
   level remains at `x=112`, keeping `PSN` immediately to its left with a
   consistent one-tile gap. The HP and EXP values terminate on the same
@@ -44,8 +44,8 @@ Dramatic Shape animation variation and does not change HUD geometry.
 ## Required fidelity surfaces
 
 - Fonts and typography: passed. Every label and value uses the existing game
-  font; only the EXP mark is proportionally reduced with nearest-neighbour
-  rendering. Names, status, level and number markers retain native scale.
+  font. The EXP mark is drawn from native glyph tiles on the 160 × 144 integer
+  pixel grid; names, status, level and number markers retain native scale.
 - Spacing and layout rhythm: passed. The three player metadata rows now use
   consistent left and right anchors, and the EXP strip fills the exact
   available underline span without colliding with the curve or vertical edge.
@@ -84,6 +84,9 @@ Dramatic Shape animation variation and does not change HUD geometry.
 6. Final same-state focused comparison — passed.
    - The focused HUD and EXP evidence visibly resolves all three annotations
      with no remaining P0/P1/P2 issue.
+7. Pixel-grid typography review — passed.
+   - Replaced the fractional EXP transform with native glyph tiles and compact
+     integer spacing; classic and WIDE captures show crisp, separated strokes.
 
 ## Residual test gap
 

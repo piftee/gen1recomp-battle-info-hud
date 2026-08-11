@@ -150,20 +150,15 @@ return function(mod)
     love.graphics.rectangle("fill", tx * 8 + 16, ty * 8 + 3, px, 2)
   end
 
-  -- Add a real EXP row directly above the HUD's native lower rule. Compress
-  -- the native EXP glyphs into the same 16px footprint as the HP mark, while
-  -- keeping the numeric readout at full size. The progress track spans the
-  -- entire rule so its unfilled portion seats into the existing black line.
+  -- Add a real EXP row directly above the HUD's native lower rule. Keep each
+  -- native font tile on the integer pixel grid, but use a compact seven-pixel
+  -- advance so the three glyphs fit beside the full-size numeric readout.
+  -- The progress track spans the entire rule so its unfilled portion seats
+  -- into the existing black line.
   local function drawExpMark(x, y)
-    local g = love.graphics
-    g.push()
-    -- A 18x6 label is centred on the native eight-pixel row. It keeps the
-    -- proportions of the original glyphs while staying close to the compact
-    -- two-tile footprint and baseline discipline of the HP mark.
-    g.translate(x, y + 1)
-    g.scale(0.75, 0.75)
-    Font.draw("EXP", 0, 0)
-    g.pop()
+    for i, glyph in ipairs({ "E", "X", "P" }) do
+      Font.draw(glyph, x + (i - 1) * 7, y)
+    end
   end
 
   local function drawExpProgress(battle, battler, x, y, width, barY,
