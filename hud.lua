@@ -13,6 +13,7 @@ return function(mod)
   local STAGED_GENDER_SCRATCH_X = 0
   local STAGED_GENDER_SCRATCH_Y = 87
   local STAGED_GENDER_CAPTURE_SIZE = 9
+  local NATIVE_STAGED_GENDER_X_NUDGE = 1
   local stagedGenderCaptureDepth = 0
   local nativeStagedHudDepth = 0
   local nativeStagedOverlayDepth = 0
@@ -541,21 +542,29 @@ return function(mod)
   -- expose the level slot just for that draw because our layout shows both.
   local function installGenderBridge(game)
     local _, hud = genderCompatibility(game)
-    if not hud or hud.battleInfoHudCoordinatesV9 then return end
+    if not hud or hud.battleInfoHudCoordinatesV10 then return end
 
     if type(hud.classicGenderXY) == "function" then
       local originalClassicXY = hud.classicGenderXY
       hud.classicGenderXY = function(side, level)
         local x, y = originalClassicXY(side, level)
+        if setting() and (nativeStagedHudDepth > 0
+            or nativeStagedOverlayDepth > 0) then
+          -- The authored gender art ends two transparent pixels before the
+          -- level glyph. At Battle Art's large integer scale that reads as a
+          -- loose gap, so close it by one native pixel without resampling.
+          x = x + NATIVE_STAGED_GENDER_X_NUDGE
+          if side == "player" then
+            -- Force the stock level row even if this bridge was hot-reloaded
+            -- on top of an older Battle Info HUD coordinate wrapper.
+            y = 64
+          end
+          return x, y
+        end
         if setting() and side == "player" then
           -- Battle Art 1.8+ captures the stock HUD unchanged. Its player
           -- name is still on y=56 and its level is still on y=64, so moving
           -- the gender tile to our enhanced y=56 row would split the name.
-          if nativeStagedHudDepth > 0 or nativeStagedOverlayDepth > 0 then
-            -- Force the stock level row even if this bridge was hot-reloaded
-            -- on top of an older Battle Info HUD coordinate wrapper.
-            return x, 64
-          end
           if stagedGenderCaptureDepth > 0 then
             return STAGED_GENDER_SCRATCH_X, STAGED_GENDER_SCRATCH_Y
           end
@@ -613,7 +622,7 @@ return function(mod)
       end
     end
 
-    hud.battleInfoHudCoordinatesV9 = true
+    hud.battleInfoHudCoordinatesV10 = true
     mod.log:info("attached HUD coordinates to Gender Mod")
   end
 
@@ -631,7 +640,7 @@ return function(mod)
   local function captureStagedGenderCell(battle, layer)
     local _, hud = genderCompatibility(battle and battle.game)
     if not (hud and type(hud.classicGenderXY) == "function"
-        and hud.battleInfoHudCoordinatesV9
+        and hud.battleInfoHudCoordinatesV10
         and playerVisible(battle)) then return nil end
     local level = battle.player.mon and battle.player.mon.level or 1
     local okXY, targetX, targetY = pcall(hud.classicGenderXY,
