@@ -490,6 +490,7 @@ T.check(rectangles[5].color[2] > 0.7 and rectangles[5].color[1] == 0,
   "the restored healthy fill remains green rather than contrast-flipped white")
 
 local genderOverlayCalls = {}
+local genderOverlayCoordinateProbe
 local genderHud = {
   classicGenderXY = function(side)
     if side == "enemy" then return 24, 8 end
@@ -500,9 +501,14 @@ local genderHud = {
     return 256, 64
   end,
   drawOverlay = function(b)
+    local playerXY
+    if genderOverlayCoordinateProbe then
+      playerXY = { genderOverlayCoordinateProbe() }
+    end
     genderOverlayCalls[#genderOverlayCalls + 1] = {
       enemyStatus = b.enemy.shownStatus,
       playerStatus = b.player.shownStatus,
+      playerXY = playerXY,
     }
     return "gender-overlay"
   end,
@@ -534,11 +540,22 @@ T.same({ gx, gy }, { 256, 56 },
 gx, gy = genderHud.classicGenderXY("enemy", battle.enemy.mon.level)
 T.same({ gx, gy }, { 24, 8 },
   "Gender Mod opponent marker retains its native level-row position")
+battle.dramaticShapeShot = { live = true }
+battle.letterboxWhite = false
+genderOverlayCoordinateProbe = function()
+  return genderHud.classicGenderXY("player", battle.player.mon.level)
+end
 T.eq(genderHud.drawOverlay(battle), "gender-overlay",
   "Gender Mod overlay result is preserved by the compatibility bridge")
+genderOverlayCoordinateProbe = nil
+battle.dramaticShapeShot = nil
+battle.letterboxWhite = true
 T.same(genderOverlayCalls[1], {
-  enemyStatus = nil, playerStatus = nil,
-}, "Gender Mod sees both level slots even when status labels are present")
+  enemyStatus = nil, playerStatus = nil, playerXY = { 104, 64 },
+}, "Gender Mod's coloured voxel pass stays on the stock level row")
+gx, gy = genderHud.classicGenderXY("player", battle.player.mon.level)
+T.same({ gx, gy }, { 104, 56 },
+  "the coloured voxel pass restores the classic coordinate afterward")
 T.eq(battle.enemy.shownStatus, "SLP",
   "Gender compatibility restores opponent status after drawing")
 T.eq(battle.player.shownStatus, "PSN",

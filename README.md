@@ -56,9 +56,9 @@ overlays can still compose through the normal `battle.overlay` hook.
 Battle Art Voxel Fork 1.8+ owns a newer complete snapped-HUD pipeline. For that
 renderer Battle Info HUD preserves the native capture and placement rather than
 injecting the older 1.7 texture expansion, and scopes its Gender Mod coordinate
-adjustment so the symbol stays beside the stock level row instead of entering
-the Pokémon name. Classic and WIDE battles continue to use the enhanced raised
-level row.
+adjustment across both the captured tile and Gender Mod's later colour pass, so
+the symbol stays beside the stock level row instead of entering the Pokémon
+name. Classic and WIDE battles continue to use the enhanced raised level row.
 
 Gender Mod 0.3.5 is supported directly. Its original marker artwork and colour
 remain owned by Gender Mod; Battle Info HUD only supplies the adjusted player
