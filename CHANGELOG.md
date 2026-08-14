@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.8.5 - 2026-08-14
+
+- Tightened the Gender Mod marker spacing by one native pixel in Battle Art
+  Voxel Fork 1.8+ so both symbols sit naturally beside their level glyphs.
+- Kept the artwork at its original 8×8 resolution and changed neither the
+  standard classic nor WIDE layout coordinates.
+
 ## 0.8.4 - 2026-08-14
 
 - Fixed Gender Mod's second coloured overlay pass cutting through the player

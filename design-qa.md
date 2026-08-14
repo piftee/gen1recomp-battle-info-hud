@@ -114,8 +114,20 @@ Dramatic Shape animation variation and does not change HUD geometry.
   stock `y=64` player level row. Classic and WIDE overlays still receive the
   enhanced `y=56` coordinate.
 - Evidence: automated coverage invokes the real overlay ordering separately
-  from the texture capture and checks `{x=104, y=64}`, then verifies that the
+  from the texture capture and checks the stock level row, then verifies the
   enhanced coordinate is restored outside the staged battle.
+
+### Follow-up: staged marker spacing
+
+- Source evidence: the 0.8.4 capture placed the player marker on the correct
+  level row, but the Gender Mod tile's transparent right edge left a visibly
+  loose two-native-pixel gap before `:L12` at Battle Art's enlarged scale.
+- Fix: both staged markers move right by one native pixel. Their authored 8×8
+  pixels and vertical centres remain untouched, leaving one clear native pixel
+  before the level glyph.
+- Scope: the nudge applies only during Battle Art 1.8+'s native HUD capture and
+  coloured overlay passes. Classic, WIDE and legacy staged coordinates are
+  unchanged.
 
 ## Residual test gap
 

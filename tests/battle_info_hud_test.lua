@@ -523,14 +523,20 @@ T.same({ gx, gy }, { 104, 56 },
 local nativeStagedGenderXY
 nativeForkProbe = function()
   nativeStagedGenderXY = {
-    genderHud.classicGenderXY("player", battle.player.mon.level),
+    player = {
+      genderHud.classicGenderXY("player", battle.player.mon.level),
+    },
+    enemy = {
+      genderHud.classicGenderXY("enemy", battle.enemy.mon.level),
+    },
   }
 end
 T.eq(nativeFork.hudTexture(battle), "native-1.8-layer",
   "Battle Art 1.8+ still returns its native staged HUD layer")
 nativeForkProbe = nil
-T.same(nativeStagedGenderXY, { 104, 64 },
-  "Battle Art 1.8+ keeps the gender marker on its stock level row")
+T.same(nativeStagedGenderXY, {
+  player = { 105, 64 }, enemy = { 25, 8 },
+}, "Battle Art 1.8+ seats both gender markers tightly beside level")
 gx, gy = genderHud.classicGenderXY("player", battle.player.mon.level)
 T.same({ gx, gy }, { 104, 56 },
   "the native staged guard restores enhanced classic coordinates afterward")
@@ -551,8 +557,8 @@ genderOverlayCoordinateProbe = nil
 battle.dramaticShapeShot = nil
 battle.letterboxWhite = true
 T.same(genderOverlayCalls[1], {
-  enemyStatus = nil, playerStatus = nil, playerXY = { 104, 64 },
-}, "Gender Mod's coloured voxel pass stays on the stock level row")
+  enemyStatus = nil, playerStatus = nil, playerXY = { 105, 64 },
+}, "Gender Mod's coloured voxel pass is seated beside the stock level row")
 gx, gy = genderHud.classicGenderXY("player", battle.player.mon.level)
 T.same({ gx, gy }, { 104, 56 },
   "the coloured voxel pass restores the classic coordinate afterward")
