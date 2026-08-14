@@ -88,6 +88,20 @@ Dramatic Shape animation variation and does not change HUD geometry.
    - Replaced the fractional EXP transform with native glyph tiles and compact
      integer spacing; classic and WIDE captures show crisp, separated strokes.
 
+## 2026-08-14 Gender Mod compatibility regression
+
+- Source evidence: Gen1Recomp 0.1.83 with Gender Mod 0.3.5 and Battle Art
+  Voxel Fork 1.8.7 placed the player's pink symbol in the Pokémon name row.
+- Cause: Battle Art 1.8+ owns a stock staged HUD whose name remains at `y=56`
+  and level remains at `y=64`; the older compatibility bridge applied Battle
+  Info HUD's raised `y=56` level coordinate during that native capture.
+- Fix: the native staged capture now receives a scoped coordinate guard that
+  preserves `y=64`, then restores the enhanced `y=56` coordinate immediately
+  afterward for classic and WIDE rendering.
+- Evidence: direct 160×144 HUD-texture capture under the real 0.1.83/0.3.5/1.8.7
+  runtime shows the symbol immediately before `:L12`, on the row below the
+  player name. Automated coverage also checks that the scope is restored.
+
 ## Residual test gap
 
 Visual QA covered macOS and Dramatic Shape 1.7.2 at 1024 × 768. Automated

@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.8.3 - 2026-08-14
+
+- Fixed Gender Mod's player symbol splitting the Pokémon name when Battle Art
+  Voxel Fork 1.8+ captures its native staged HUD.
+- Kept the native staged symbol on Battle Art's stock level row while retaining
+  the raised level-row coordinate in Battle Info HUD's classic and WIDE views.
+- Preserved Battle Art 1.8+'s own HUD capture and edge placement instead of
+  applying the older 1.7 texture-layout bridge to its new pipeline.
+
 ## 0.8.2 - 2026-08-11
 
 - Replaced the fractionally scaled EXP label with the game's original native

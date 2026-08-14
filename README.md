@@ -46,12 +46,19 @@ preference. Removing or disabling it restores the original presentation.
 The enhancements draw in Gen1Recomp's normal classic 160×144 and WIDE battle
 layouts, as well as when a compatible Dramatic Shape renderer exposes a live
 staged battle. This includes upstream Dramatic Shape 1.8.2, BATTLE ART VOXEL
-FORK 1.7.9 and Dramaless Shape. In the classic layout the native HUD draw is
+FORK 1.7.x and Dramaless Shape. In the classic layout the native HUD draw is
 edited in a private pixel-perfect layer and returned at its original position.
 For staged renderers, the mod edits the renderer's original 160×144 HUD texture
 before it is snapped to the window edges, including its current HUD scale and
 dark-ink treatment. It does not paint a second late overlay, and other battle
 overlays can still compose through the normal `battle.overlay` hook.
+
+Battle Art Voxel Fork 1.8+ owns a newer complete snapped-HUD pipeline. For that
+renderer Battle Info HUD preserves the native capture and placement rather than
+injecting the older 1.7 texture expansion, and scopes its Gender Mod coordinate
+adjustment so the symbol stays beside the stock level row instead of entering
+the Pokémon name. Classic and WIDE battles continue to use the enhanced raised
+level row.
 
 Gender Mod 0.3.5 is supported directly. Its original marker artwork and colour
 remain owned by Gender Mod; Battle Info HUD only supplies the adjusted player

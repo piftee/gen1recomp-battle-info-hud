@@ -394,6 +394,37 @@ T.eq(#canvasClears, 0,
 T.eq(#hpBars, 0, "OFF removes all classic HUD additions")
 rows[2].step(game, 1)
 
+local nativeForkProbe
+local nativeFork = {
+  hudTexture = function()
+    if nativeForkProbe then nativeForkProbe() end
+    return "native-1.8-layer"
+  end,
+  snapRects = function()
+    return { player = { 12, 34, 56, 78 } },
+      { player = { x = 12, y = 34, scale = 2 } }
+  end,
+}
+local nativeForkTexture = nativeFork.hudTexture
+local nativeForkSnapRects = nativeFork.snapRects
+game.mods.exports.BATTLE_ART_VOXEL_FORK = {
+  version = "1.8.7",
+  lib = {
+    require = function(name)
+      if name == "OverworldBattle" then return nativeFork end
+    end,
+  },
+}
+battle.dramaticShapeShot = { live = true }
+battle.letterboxWhite = false
+Runtime.call("battle.overlay", function() end, battle)
+T.check(nativeFork.hudTexture ~= nativeForkTexture,
+  "Battle Art 1.8+ capture receives a coordinate-only compatibility guard")
+T.eq(nativeFork.snapRects, nativeForkSnapRects,
+  "Battle Art 1.8+ retains its native staged HUD placement")
+T.eq(nativeFork.hudTexture(battle), "native-1.8-layer",
+  "Battle Art 1.8+ native staged HUD remains callable")
+
 local forkTextureArgs, forkFlipCalls = {}, {}
 local forkTextureProbe
 local fork = {
@@ -422,6 +453,7 @@ local forkHud = {
   end,
 }
 game.mods.exports.BATTLE_ART_VOXEL_FORK = {
+  version = "1.7.9",
   lib = {
     require = function(name)
       if name == "OverworldBattle" then return fork end
@@ -482,6 +514,20 @@ Runtime.call("battle.overlay", function() end, battle)
 local gx, gy = genderHud.classicGenderXY("player", battle.player.mon.level)
 T.same({ gx, gy }, { 104, 56 },
   "Gender Mod player marker follows the raised classic level row")
+local nativeStagedGenderXY
+nativeForkProbe = function()
+  nativeStagedGenderXY = {
+    genderHud.classicGenderXY("player", battle.player.mon.level),
+  }
+end
+T.eq(nativeFork.hudTexture(battle), "native-1.8-layer",
+  "Battle Art 1.8+ still returns its native staged HUD layer")
+nativeForkProbe = nil
+T.same(nativeStagedGenderXY, { 104, 64 },
+  "Battle Art 1.8+ keeps the gender marker on its stock level row")
+gx, gy = genderHud.classicGenderXY("player", battle.player.mon.level)
+T.same({ gx, gy }, { 104, 56 },
+  "the native staged guard restores enhanced classic coordinates afterward")
 gx, gy = genderHud.wideGenderXY("player", battle.player.mon.level)
 T.same({ gx, gy }, { 256, 56 },
   "Gender Mod player marker follows the raised wide level row")

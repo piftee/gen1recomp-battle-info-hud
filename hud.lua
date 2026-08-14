@@ -14,6 +14,7 @@ return function(mod)
   local STAGED_GENDER_SCRATCH_Y = 87
   local STAGED_GENDER_CAPTURE_SIZE = 9
   local stagedGenderCaptureDepth = 0
+  local nativeStagedHudDepth = 0
   local STAGED_COMPANIONS = {
     "DRAMATIC_SHAPE",
     "BATTLE_ART_VOXEL_FORK",
@@ -545,6 +546,10 @@ return function(mod)
       hud.classicGenderXY = function(side, level)
         local x, y = originalClassicXY(side, level)
         if setting() and side == "player" then
+          -- Battle Art 1.8+ captures the stock HUD unchanged. Its player
+          -- name is still on y=56 and its level is still on y=64, so moving
+          -- the gender tile to our enhanced y=56 row would split the name.
+          if nativeStagedHudDepth > 0 then return x, y end
           if stagedGenderCaptureDepth > 0 then
             return STAGED_GENDER_SCRATCH_X, STAGED_GENDER_SCRATCH_Y
           end
@@ -703,6 +708,39 @@ return function(mod)
         or overworld.battleInfoHudTextureEditorV6 then return end
     local innerHudTexture = overworld.hudTexture
     local innerSnapRects = overworld.snapRects
+    local companionApi = exports and exports[companionId]
+    local companionVersion = tostring(companionApi and companionApi.version
+      or "0")
+    local companionMajor, companionMinor = companionVersion:match(
+      "^(%d+)%.(%d+)")
+    local usesNativeStagedHud = companionId == "BATTLE_ART_VOXEL_FORK"
+      and ((tonumber(companionMajor) or 0) > 1
+        or ((tonumber(companionMajor) or 0) == 1
+          and (tonumber(companionMinor) or 0) >= 8))
+
+    -- Battle Art 1.8+ publishes and owns a complete snapped HUD pipeline.
+    -- Repainting its private 160x144 capture through the older 1.7 bridge
+    -- changes the block dimensions after the fork has already calculated its
+    -- window-edge placement; in move selection that pulls names and HP bars
+    -- back into the arena. Leave the fork's HUD capture and placement intact.
+    -- The classic and engine-WIDE renderers remain enhanced below.
+    if usesNativeStagedHud then
+      overworld.hudTexture = function(liveBattle, ...)
+        local args = { ... }
+        nativeStagedHudDepth = nativeStagedHudDepth + 1
+        local layer
+        local okLayer, layerErr = xpcall(function()
+          layer = innerHudTexture(liveBattle, unpack(args))
+        end, debug.traceback)
+        nativeStagedHudDepth = math.max(0, nativeStagedHudDepth - 1)
+        if not okLayer then error(layerErr, 0) end
+        return layer
+      end
+      overworld.battleInfoHudTextureEditorV6 = true
+      mod.log:info("preserving %s %s native staged HUD coordinates",
+        companionId, companionVersion)
+      return
+    end
 
     -- Dramatic Shape normally frosts the stock 40px-tall player HUD. Our
     -- texture keeps the same bottom/right edges but grows upward by one tile

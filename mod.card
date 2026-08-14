@@ -16,10 +16,11 @@ return {
       "One BATTLE INFO on/off setting in the standard Options menu",
     },
     known = {
-      "Upstream Dramatic Shape, BATTLE ART VOXEL FORK and Dramaless Shape edit their original HUD texture before it is snapped",
+      "Upstream Dramatic Shape, BATTLE ART VOXEL FORK 1.7.x and Dramaless Shape edit their original HUD texture before it is snapped",
       "Gender Mod keeps its own marker artwork and colour while Battle Info HUD supplies compatible battle coordinates",
       "Voxel HUD capture keeps Gender Mod pixels isolated from native name and panel pixels",
-      "The existing HUD is enhanced in classic, WIDE and supported staged battle layouts",
+      "Battle Art 1.8+ keeps Gender Mod on its native staged level row instead of the name row",
+      "The existing HUD is enhanced in classic, WIDE and legacy staged layouts; Battle Art 1.8+ keeps its native staged pipeline",
       "Uses engine_internals to draw with Gen1Recomp's font and HUD tiles",
     },
   },
