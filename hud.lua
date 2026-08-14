@@ -15,6 +15,8 @@ return function(mod)
   local STAGED_GENDER_CAPTURE_SIZE = 9
   local stagedGenderCaptureDepth = 0
   local nativeStagedHudDepth = 0
+  local nativeStagedOverlayDepth = 0
+  local nativeStagedHudOwner = false
   local STAGED_COMPANIONS = {
     "DRAMATIC_SHAPE",
     "BATTLE_ART_VOXEL_FORK",
@@ -539,7 +541,7 @@ return function(mod)
   -- expose the level slot just for that draw because our layout shows both.
   local function installGenderBridge(game)
     local _, hud = genderCompatibility(game)
-    if not hud or hud.battleInfoHudCoordinatesV8 then return end
+    if not hud or hud.battleInfoHudCoordinatesV9 then return end
 
     if type(hud.classicGenderXY) == "function" then
       local originalClassicXY = hud.classicGenderXY
@@ -549,7 +551,11 @@ return function(mod)
           -- Battle Art 1.8+ captures the stock HUD unchanged. Its player
           -- name is still on y=56 and its level is still on y=64, so moving
           -- the gender tile to our enhanced y=56 row would split the name.
-          if nativeStagedHudDepth > 0 then return x, y end
+          if nativeStagedHudDepth > 0 or nativeStagedOverlayDepth > 0 then
+            -- Force the stock level row even if this bridge was hot-reloaded
+            -- on top of an older Battle Info HUD coordinate wrapper.
+            return x, 64
+          end
           if stagedGenderCaptureDepth > 0 then
             return STAGED_GENDER_SCRATCH_X, STAGED_GENDER_SCRATCH_Y
           end
@@ -574,6 +580,8 @@ return function(mod)
         if not setting() then return originalOverlay(battle, ...) end
         local args = { ... }
         local saved = {}
+        local nativeStagedOverlay = nativeStagedHudOwner
+          and stagedLayout(battle)
         for _, battler in pairs({ battle and battle.enemy,
             battle and battle.player }) do
           if battler and battler.shownStatus then
@@ -584,9 +592,19 @@ return function(mod)
           end
         end
         local result
+        if nativeStagedOverlay then
+          -- Gender Mod draws a second coloured glyph after Battle Art has
+          -- captured the HUD. Keep that pass on the same stock level row as
+          -- the captured glyph instead of repainting it through the name.
+          nativeStagedOverlayDepth = nativeStagedOverlayDepth + 1
+        end
         local ok, err = xpcall(function()
           result = originalOverlay(battle, unpack(args))
         end, debug.traceback)
+        if nativeStagedOverlay then
+          nativeStagedOverlayDepth = math.max(0,
+            nativeStagedOverlayDepth - 1)
+        end
         for i = #saved, 1, -1 do
           saved[i].battler.shownStatus = saved[i].status
         end
@@ -595,7 +613,7 @@ return function(mod)
       end
     end
 
-    hud.battleInfoHudCoordinatesV8 = true
+    hud.battleInfoHudCoordinatesV9 = true
     mod.log:info("attached HUD coordinates to Gender Mod")
   end
 
@@ -613,7 +631,7 @@ return function(mod)
   local function captureStagedGenderCell(battle, layer)
     local _, hud = genderCompatibility(battle and battle.game)
     if not (hud and type(hud.classicGenderXY) == "function"
-        and hud.battleInfoHudCoordinatesV8
+        and hud.battleInfoHudCoordinatesV9
         and playerVisible(battle)) then return nil end
     local level = battle.player.mon and battle.player.mon.level or 1
     local okXY, targetX, targetY = pcall(hud.classicGenderXY,
@@ -704,8 +722,7 @@ return function(mod)
     if not (lib and type(lib.require) == "function") then return end
     local ok, overworld = pcall(lib.require, "OverworldBattle")
     if not ok or type(overworld) ~= "table"
-        or type(overworld.hudTexture) ~= "function"
-        or overworld.battleInfoHudTextureEditorV6 then return end
+        or type(overworld.hudTexture) ~= "function" then return end
     local innerHudTexture = overworld.hudTexture
     local innerSnapRects = overworld.snapRects
     local companionApi = exports and exports[companionId]
@@ -717,6 +734,8 @@ return function(mod)
       and ((tonumber(companionMajor) or 0) > 1
         or ((tonumber(companionMajor) or 0) == 1
           and (tonumber(companionMinor) or 0) >= 8))
+    if usesNativeStagedHud then nativeStagedHudOwner = true end
+    if overworld.battleInfoHudTextureEditorV6 then return end
 
     -- Battle Art 1.8+ publishes and owns a complete snapped HUD pipeline.
     -- Repainting its private 160x144 capture through the older 1.7 bridge

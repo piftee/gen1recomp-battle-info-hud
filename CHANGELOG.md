@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.8.4 - 2026-08-14
+
+- Fixed Gender Mod's second coloured overlay pass cutting through the player
+  Pokémon's name in Battle Art Voxel Fork 1.8+ battles.
+- Kept both the captured gender tile and the later coloured marker on Battle
+  Art's stock level row while preserving the raised coordinate in classic and
+  WIDE layouts.
+- Made the coordinate bridge safe to reattach after updating the mod in a
+  running installation.
+
 ## 0.8.3 - 2026-08-14
 
 - Fixed Gender Mod's player symbol splitting the Pokémon name when Battle Art

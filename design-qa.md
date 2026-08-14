@@ -102,6 +102,21 @@ Dramatic Shape animation variation and does not change HUD geometry.
   runtime shows the symbol immediately before `:L12`, on the row below the
   player name. Automated coverage also checks that the scope is restored.
 
+### Follow-up: coloured overlay pass
+
+- Source evidence: the 0.8.3 follow-up capture showed a second pink player
+  glyph cutting through `PIKACHU` even though the glyph baked into Battle
+  Art's HUD texture was correctly seated on the level row.
+- Cause: Gender Mod repaints its coloured marker after the staged texture has
+  been placed. That later pass ran outside the capture-only coordinate guard
+  and therefore received Battle Info HUD's classic `y=56` player coordinate.
+- Fix: Battle Art 1.8+ staged battles now scope both Gender Mod passes to the
+  stock `y=64` player level row. Classic and WIDE overlays still receive the
+  enhanced `y=56` coordinate.
+- Evidence: automated coverage invokes the real overlay ordering separately
+  from the texture capture and checks `{x=104, y=64}`, then verifies that the
+  enhanced coordinate is restored outside the staged battle.
+
 ## Residual test gap
 
 Visual QA covered macOS and Dramatic Shape 1.7.2 at 1024 × 768. Automated
