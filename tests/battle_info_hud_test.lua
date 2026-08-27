@@ -382,6 +382,18 @@ T.check(rectangles[#rectangles].color[3] > 0.7
 T.eq(#marks, 4,
   "the reseated EXP pixels remain protected in the final frame pass")
 
+-- The native move-details box covers the left edge of the EXP row. Text-only
+-- colour mods can run another zone pass after that box is drawn, so never
+-- restore blue battle-background pixels on top of the later move UI.
+battle.phase = "moveSelect"
+local moveRectangles, moveMarks = #rectangles, #marks
+BattleState.drawZonePass(battle, "move-details", 0, 0)
+T.eq(#rectangles, moveRectangles,
+  "move selection does not reseat EXP fill over the PP details box")
+T.eq(#marks, moveMarks,
+  "move selection adds no protected EXP pixels over native move UI")
+battle.phase = nil
+
 local savedDebug = rawget(_G, "debug")
 _G.debug = nil
 local noDebugOk, noDebugErr = pcall(function()

@@ -69,6 +69,10 @@ remain owned by Gender Mod; Battle Info HUD only supplies the adjusted player
 coordinate and preserves that marker through the staged renderer's own clean
 pixel capture and colour-shadow pass.
 
+Typed Move Colors' Text Only mode is supported in the classic move-selection
+screen. Its native TYPE/PP box remains above the EXP row without a late blue
+fill being restored across it.
+
 This package contains no ROM or ROM-derived assets. Pokémon and related names
 are trademarks of their respective owners; this is an unofficial fan mod.
 

@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.8.7 - 2026-08-27
+
+- Fixed the blue EXP fill being restored over the native TYPE/PP box when a
+  move-colour mod used its text-only presentation during move selection.
+- Kept normal battle EXP colour restoration unchanged and added coverage for
+  both move-selection geometry and protected true-colour pixels.
+
 ## 0.8.6 - 2026-08-27
 
 - Fixed the iOS crash when entering a battle in packaged Gen1Recomp builds.

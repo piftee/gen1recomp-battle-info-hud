@@ -231,7 +231,11 @@ return function(mod)
   -- zone pass; this is still part of the original HUD draw, before pics and
   -- animations are composited.
   local function drawClassicExpFill(battle)
-    if not playerVisible(battle) then return end
+    if not playerVisible(battle)
+        or battle.phase == "moveSelect"
+        or battle.phase == "mimicSelect" then
+      return
+    end
     local _, _, ratio = expProgress(battle.data, battle.player.mon)
     ratio = math.max(0, math.min(1, ratio or 0))
     local fill = math.floor(80 * ratio + 0.5)
