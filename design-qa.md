@@ -129,6 +129,19 @@ Dramatic Shape animation variation and does not change HUD geometry.
   coloured overlay passes. Classic, WIDE and legacy staged coordinates are
   unchanged.
 
+## 2026-08-27 iOS battle-entry crash
+
+- Source evidence: an iOS packaged build stopped at battle entry with
+  `hud.lua:505: attempt to index global 'debug' (a nil value)`.
+- Cause: five protected HUD cleanup paths passed `debug.traceback` directly to
+  `xpcall`. The optional Lua debug library is present in desktop development
+  but intentionally absent from packaged mobile builds.
+- Fix: all protected paths now use a local message handler that calls the real
+  traceback when available and otherwise returns the original error text.
+- Evidence: automated coverage enters the enhanced classic battle renderer
+  with `_G.debug = nil`, reproducing the mobile runtime constraint. The draw,
+  status restoration and canvas cleanup complete without an error.
+
 ## Residual test gap
 
 Visual QA covered macOS and Dramatic Shape 1.7.2 at 1024 × 768. Automated

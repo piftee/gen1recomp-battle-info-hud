@@ -40,6 +40,8 @@ No additional HUD boxes or replacement panels are drawn.
 The mod changes presentation only. It does not alter Pokémon stats, EXP gains,
 catching, status effects, battle rules or save data beyond its own on/off
 preference. Removing or disabling it restores the original presentation.
+Packaged mobile builds are supported without Lua's optional developer-only
+`debug` library.
 
 ## Compatibility
 
