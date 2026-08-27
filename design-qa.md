@@ -142,6 +142,21 @@ Dramatic Shape animation variation and does not change HUD geometry.
   with `_G.debug = nil`, reproducing the mobile runtime constraint. The draw,
   status restoration and canvas cleanup complete without an error.
 
+## 2026-08-27 text-only move-selection EXP overlap
+
+- Source evidence: on the mobile classic battle screen, Typed Move Colors in
+  Text Only mode left a blue EXP strip running left through the native TYPE/PP
+  details box after FIGHT was selected.
+- Cause: the text-only presentation performs a palette-zone pass after the
+  move UI is drawn. Battle Info HUD treated that pass as the battle-background
+  pass and restored the EXP fill at its normal battle coordinates.
+- Fix: late classic EXP colour restoration is suspended while `moveSelect` or
+  `mimicSelect` owns the lower screen. The actual HUD EXP row and every normal
+  battle phase retain the existing blue progress fill.
+- Evidence: automated coverage runs the wrapped zone pass during move
+  selection and verifies that it adds neither a rectangle nor protected
+  true-colour pixels over the move-details box.
+
 ## Residual test gap
 
 Visual QA covered macOS and Dramatic Shape 1.7.2 at 1024 × 768. Automated
