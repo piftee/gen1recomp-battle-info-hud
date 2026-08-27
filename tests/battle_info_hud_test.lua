@@ -382,6 +382,16 @@ T.check(rectangles[#rectangles].color[3] > 0.7
 T.eq(#marks, 4,
   "the reseated EXP pixels remain protected in the final frame pass")
 
+local savedDebug = rawget(_G, "debug")
+_G.debug = nil
+local noDebugOk, noDebugErr = pcall(function()
+  BattleState.drawHUDs(battle, 0)
+end)
+_G.debug = savedDebug
+T.check(noDebugOk,
+  "classic battle entry works without the optional debug library ("
+    .. tostring(noDebugErr) .. ")")
+
 rows[2].step(game, 1)
 rectangles, texts, hpBars, marks, sprites, canvasCalls =
   {}, {}, {}, {}, {}, {}

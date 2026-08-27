@@ -20,6 +20,7 @@ return {
       "Gender Mod keeps its own marker artwork and colour while Battle Info HUD aligns both its captured and post-pass markers",
       "Voxel HUD capture keeps Gender Mod pixels isolated from native name and panel pixels",
       "Battle Art 1.8+ seats Gender Mod beside its native staged level glyph instead of the name row",
+      "Packaged mobile battles do not require Lua's optional debug library",
       "The existing HUD is enhanced in classic, WIDE and legacy staged layouts; Battle Art 1.8+ keeps its native staged pipeline",
       "Uses engine_internals to draw with Gen1Recomp's font and HUD tiles",
     },

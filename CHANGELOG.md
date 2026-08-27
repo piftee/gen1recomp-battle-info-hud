@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.8.6 - 2026-08-27
+
+- Fixed the iOS crash when entering a battle in packaged Gen1Recomp builds.
+- Removed the enhanced HUD's runtime dependency on Lua's optional `debug`
+  library while retaining protected state and canvas cleanup.
+
 ## 0.8.5 - 2026-08-14
 
 - Tightened the Gender Mod marker spacing by one native pixel in Battle Art

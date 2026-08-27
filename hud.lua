@@ -24,6 +24,18 @@ return function(mod)
     "DRAMALESS_SHAPE",
   }
 
+  -- Packaged mobile builds intentionally omit Lua's optional debug library.
+  -- Keep protected cleanup useful in development without making battle entry
+  -- depend on an API that is unavailable on iOS and other release targets.
+  local function traceback(err)
+    local library = rawget(_G, "debug")
+    if type(library) == "table"
+        and type(library.traceback) == "function" then
+      return library.traceback(err, 2)
+    end
+    return tostring(err)
+  end
+
   local function setting()
     local ok, value = pcall(mod.options.get, mod.options, "enabled")
     return not ok or value == nil or value == true
@@ -417,7 +429,7 @@ return function(mod)
     expose(battle.enemy, shortenNames and 48 or nil)
     expose(battle.player, shortenNames and 40 or nil)
 
-    local ok, err = xpcall(function() result = draw() end, debug.traceback)
+    local ok, err = xpcall(function() result = draw() end, traceback)
     for i = #restores, 1, -1 do
       local item = restores[i]
       item.battler.shownStatus = item.status
@@ -502,7 +514,7 @@ return function(mod)
       g.draw(layer, 0, 0)
       g.pop()
       pushed = false
-    end, debug.traceback)
+    end, traceback)
 
     if pushed then pcall(g.pop) end
     if previous then g.setCanvas(previous) else g.setCanvas() end
@@ -609,7 +621,7 @@ return function(mod)
         end
         local ok, err = xpcall(function()
           result = originalOverlay(battle, unpack(args))
-        end, debug.traceback)
+        end, traceback)
         if nativeStagedOverlay then
           nativeStagedOverlayDepth = math.max(0,
             nativeStagedOverlayDepth - 1)
@@ -631,7 +643,7 @@ return function(mod)
   local function withStagedGenderCapture(draw)
     stagedGenderCaptureDepth = stagedGenderCaptureDepth + 1
     local result
-    local ok, err = xpcall(function() result = draw() end, debug.traceback)
+    local ok, err = xpcall(function() result = draw() end, traceback)
     stagedGenderCaptureDepth = math.max(0, stagedGenderCaptureDepth - 1)
     if not ok then error(err, 0) end
     return result
@@ -759,7 +771,7 @@ return function(mod)
         local layer
         local okLayer, layerErr = xpcall(function()
           layer = innerHudTexture(liveBattle, unpack(args))
-        end, debug.traceback)
+        end, traceback)
         nativeStagedHudDepth = math.max(0, nativeStagedHudDepth - 1)
         if not okLayer then error(layerErr, 0) end
         return layer
