@@ -67,7 +67,10 @@ the enhanced raised level row.
 Gender Mod 0.3.5 is supported directly. Its original marker artwork and colour
 remain owned by Gender Mod; Battle Info HUD only supplies the adjusted player
 coordinate and preserves that marker through the staged renderer's own clean
-pixel capture and colour-shadow pass.
+pixel capture and colour-shadow pass. Male and female markers remain visible;
+the neutral/unknown `⚲` cell is left empty in battles so unsupported species
+do not gain an unexplained extra symbol. Gender Mod's party and summary screens
+retain their own complete presentation.
 
 Typed Move Colors' Text Only mode is supported in the classic move-selection
 screen. Its native TYPE/PP box remains above the EXP row without a late blue

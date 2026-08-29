@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.8.8 - 2026-08-29
+
+- Removed Gender Mod's neutral/unknown `⚲` tile from battle HUDs, including
+  species outside its Gen 1 gender-ratio table.
+- Kept male and female battle markers unchanged and preserved Gender Mod's
+  own genderless presentation in party, summary and other non-battle screens.
+
 ## 0.8.7 - 2026-08-27
 
 - Fixed the blue EXP fill being restored over the native TYPE/PP box when a

@@ -17,6 +17,7 @@ return function(mod)
   local stagedGenderCaptureDepth = 0
   local nativeStagedHudDepth = 0
   local nativeStagedOverlayDepth = 0
+  local genderBattleDrawDepth = 0
   local nativeStagedHudOwner = false
   local STAGED_COMPANIONS = {
     "DRAMATIC_SHAPE",
@@ -556,9 +557,56 @@ return function(mod)
   -- BattleHUD contract the new coordinate while this HUD is enabled. Its
   -- overlay also normally hides the glyph whenever a status is present;
   -- expose the level slot just for that draw because our layout shows both.
+  local function installNeutralGenderGuard(hud)
+    if hud.battleInfoHudSuppressNeutralBattleGlyphV1 then return end
+
+    local function wrapGlyph(name)
+      local original = hud[name]
+      if type(original) ~= "function" then return end
+      hud[name] = function(Gender, gender, ...)
+        -- Gender Mod uses nil/N for both genuinely genderless Pokémon and
+        -- species it does not know. Its neutral symbol is visually identical
+        -- in both cases and reads as an unexplained extra HUD marker. Keep
+        -- male/female battle markers, but leave the neutral cell empty.
+        if setting() and genderBattleDrawDepth > 0
+            and (gender == nil or gender == "N") then
+          return false
+        end
+        return original(Gender, gender, ...)
+      end
+    end
+
+    local function wrapBattlePass(name)
+      local original = hud[name]
+      if type(original) ~= "function" then return end
+      hud[name] = function(...)
+        local args = { ... }
+        genderBattleDrawDepth = genderBattleDrawDepth + 1
+        local result
+        local ok, err = xpcall(function()
+          result = original(unpack(args))
+        end, traceback)
+        genderBattleDrawDepth = math.max(0, genderBattleDrawDepth - 1)
+        if not ok then error(err, 0) end
+        return result
+      end
+    end
+
+    wrapGlyph("drawGlyph")
+    wrapGlyph("drawGlyphInk")
+    wrapBattlePass("drawClassicIntoHUDs")
+    wrapBattlePass("drawOverlay")
+    hud.battleInfoHudSuppressNeutralBattleGlyphV1 = true
+    mod.log:info("removed neutral Gender Mod marker from battle HUD")
+  end
+
   local function installGenderBridge(game)
     local _, hud = genderCompatibility(game)
-    if not hud or hud.battleInfoHudCoordinatesV10 then return end
+    if not hud then return end
+    if hud.battleInfoHudCoordinatesV10 then
+      installNeutralGenderGuard(hud)
+      return
+    end
 
     if type(hud.classicGenderXY) == "function" then
       local originalClassicXY = hud.classicGenderXY
@@ -640,6 +688,7 @@ return function(mod)
 
     hud.battleInfoHudCoordinatesV10 = true
     mod.log:info("attached HUD coordinates to Gender Mod")
+    installNeutralGenderGuard(hud)
   end
 
   local genderCellLayer

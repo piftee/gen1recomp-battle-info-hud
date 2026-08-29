@@ -157,6 +157,23 @@ Dramatic Shape animation variation and does not change HUD geometry.
   selection and verifies that it adds neither a rectangle nor protected
   true-colour pixels over the move-details box.
 
+## 2026-08-29 neutral Gender Mod battle marker
+
+- Source evidence: the reported WIDE battle showed Gender Mod's black `⚲`
+  asset one tile before SENTRET's native level marker. A pixel comparison
+  matched the boxed glyph to Gender Mod 0.3.5's `assets/genderless.png`.
+- Cause: Gender Mod resolves both genuinely genderless Pokémon and species
+  missing from its Gen 1 ratio table to the same neutral state. SENTRET is not
+  present in that table, so the fallback icon appeared as an unexplained HUD
+  symbol.
+- Fix: Battle Info HUD suppresses neutral/N art only while Gender Mod is
+  drawing its battle HUD or coloured battle overlay. Male and female markers
+  retain their original artwork and coordinates; non-battle Gender Mod screens
+  remain untouched.
+- Evidence: automated coverage exercises the ink, authored-colour and overlay
+  paths. Neutral calls are absent inside battle passes, M/F calls remain, and
+  a neutral call outside the battle scope still reaches Gender Mod.
+
 ## Residual test gap
 
 Visual QA covered macOS and Dramatic Shape 1.7.2 at 1024 × 768. Automated

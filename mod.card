@@ -18,6 +18,7 @@ return {
     known = {
       "Upstream Dramatic Shape, BATTLE ART VOXEL FORK 1.7.x and Dramaless Shape edit their original HUD texture before it is snapped",
       "Gender Mod keeps its own marker artwork and colour while Battle Info HUD aligns both its captured and post-pass markers",
+      "Gender Mod's neutral or unknown marker is omitted from battles while male and female markers remain",
       "Voxel HUD capture keeps Gender Mod pixels isolated from native name and panel pixels",
       "Battle Art 1.8+ seats Gender Mod beside its native staged level glyph instead of the name row",
       "Packaged mobile battles do not require Lua's optional debug library",
