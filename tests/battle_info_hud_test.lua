@@ -513,6 +513,8 @@ T.check(rectangles[5].color[2] > 0.7 and rectangles[5].color[1] == 0,
 
 local genderOverlayCalls = {}
 local genderOverlayCoordinateProbe
+local genderOverlayGlyphProbe
+local genderGlyphCalls = {}
 local genderHud = {
   classicGenderXY = function(side)
     if side == "enemy" then return 24, 8 end
@@ -527,6 +529,7 @@ local genderHud = {
     if genderOverlayCoordinateProbe then
       playerXY = { genderOverlayCoordinateProbe() }
     end
+    if genderOverlayGlyphProbe then genderOverlayGlyphProbe() end
     genderOverlayCalls[#genderOverlayCalls + 1] = {
       enemyStatus = b.enemy.shownStatus,
       playerStatus = b.player.shownStatus,
@@ -535,10 +538,34 @@ local genderHud = {
     return "gender-overlay"
   end,
 }
+genderHud.drawGlyph = function(_, gender)
+  genderGlyphCalls[#genderGlyphCalls + 1] = "color:" .. tostring(gender)
+  return true
+end
+genderHud.drawGlyphInk = function(_, gender)
+  genderGlyphCalls[#genderGlyphCalls + 1] = "ink:" .. tostring(gender)
+  return true
+end
+genderHud.drawClassicIntoHUDs = function()
+  genderHud.drawGlyphInk({}, nil)
+  genderHud.drawGlyphInk({}, "F")
+  genderHud.drawGlyph({}, nil)
+  genderHud.drawGlyph({}, "M")
+  return "gender-hud"
+end
 game.mods.exports.gender_mod = { BattleHUD = genderHud }
 battle.dramaticShapeShot = nil
 battle.letterboxWhite = true
 Runtime.call("battle.overlay", function() end, battle)
+genderGlyphCalls = {}
+T.eq(genderHud.drawClassicIntoHUDs(), "gender-hud",
+  "Gender Mod's native battle pass result is preserved")
+T.same(genderGlyphCalls, { "ink:F", "color:M" },
+  "battle passes omit neutral gender art but retain male and female markers")
+genderGlyphCalls = {}
+genderHud.drawGlyph({}, nil)
+T.same(genderGlyphCalls, { "color:nil" },
+  "neutral Gender Mod art remains available outside battle passes")
 local gx, gy = genderHud.classicGenderXY("player", battle.player.mon.level)
 T.same({ gx, gy }, { 104, 56 },
   "Gender Mod player marker follows the raised classic level row")
@@ -573,9 +600,17 @@ battle.letterboxWhite = false
 genderOverlayCoordinateProbe = function()
   return genderHud.classicGenderXY("player", battle.player.mon.level)
 end
+genderOverlayGlyphProbe = function()
+  genderHud.drawGlyph({}, nil)
+  genderHud.drawGlyph({}, "F")
+end
+genderGlyphCalls = {}
 T.eq(genderHud.drawOverlay(battle), "gender-overlay",
   "Gender Mod overlay result is preserved by the compatibility bridge")
 genderOverlayCoordinateProbe = nil
+genderOverlayGlyphProbe = nil
+T.same(genderGlyphCalls, { "color:F" },
+  "the coloured battle overlay also omits only the neutral marker")
 battle.dramaticShapeShot = nil
 battle.letterboxWhite = true
 T.same(genderOverlayCalls[1], {
