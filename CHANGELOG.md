@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.8.9 - 2026-08-29
+
+- Unified Gender Mod 0.3.5 and Crystal 251 gender rendering in battle HUDs.
+- Removed Crystal 251's second monochrome symbol after the level when Gender
+  Mod and Battle Info HUD are active together.
+- Gave Crystal-only species such as Sentret one coloured Gender Mod marker in
+  the same before-level cell as Kanto species.
+- Restored both mods' native behavior immediately when Battle Info HUD is
+  switched off or either companion is absent.
+
 ## 0.8.8 - 2026-08-29
 
 - Removed Gender Mod's neutral/unknown `⚲` tile from battle HUDs, including

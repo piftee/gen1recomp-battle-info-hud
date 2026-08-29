@@ -10,6 +10,7 @@ return function(mod)
   local exposedStatuses = setmetatable({}, { __mode = "k" })
   local CAUGHT_ROW = { { hp = 1 } }
   local GENDER_MOD_ID = "gender_mod"
+  local CRYSTAL_251_MOD_ID = "CRYSTAL_251"
   local STAGED_GENDER_SCRATCH_X = 0
   local STAGED_GENDER_SCRATCH_Y = 87
   local STAGED_GENDER_CAPTURE_SIZE = 9
@@ -552,6 +553,154 @@ return function(mod)
     return api, hud
   end
 
+  local function crystalGenderCompatibility(game)
+    local exports = game and game.mods and game.mods.exports
+    local api = exports and exports[CRYSTAL_251_MOD_ID]
+    local gender = api and api.crystalGender
+    if type(gender) ~= "table"
+        or type(gender.forMon) ~= "function" then
+      return nil
+    end
+    return gender
+  end
+
+  -- Crystal 251 already knows the gender ratios of all Johto species and
+  -- publishes the resolved M/F value on its compatibility API. Gender Mod
+  -- 0.3.5 only ships Kanto ratios, however, so it paints its black unknown
+  -- tile for SENTRET while Crystal independently appends another monochrome
+  -- sign after the level. When both providers are present, let Gender Mod
+  -- retain ownership of its Kanto cells and use its same authored artwork for
+  -- Crystal-only species. Crystal's text-tracking renderer is then redundant.
+  local function installCrystalGenderBridge(game, genderApi, hud)
+    local crystal = crystalGenderCompatibility(game)
+    local ratios = genderApi and genderApi.ratios
+    if not (crystal and type(ratios) == "table" and hud) then return end
+
+    local function crystalOnlyGender(battler)
+      local mon = battler and battler.mon
+      if type(mon) ~= "table" or ratios[mon.species] ~= nil then return nil end
+      local ok, value = pcall(crystal.forMon, mon)
+      if not ok or (value ~= "M" and value ~= "F") then return nil end
+      return value
+    end
+
+    if not crystal.battleInfoHudTrackingBridgeV1
+        and type(crystal.withBattleHudTracking) == "function" then
+      local originalTracking = crystal.withBattleHudTracking
+      crystal.withBattleHudTracking = function(battle, draw, ...)
+        local activeGenderApi = genderCompatibility(battle and battle.game)
+        if setting() and activeGenderApi and type(draw) == "function" then
+          return draw(...)
+        end
+        return originalTracking(battle, draw, ...)
+      end
+      crystal.battleInfoHudTrackingBridgeV1 = true
+    end
+
+    if hud.battleInfoHudCrystal251GenderV1 then return end
+
+    local originalClassic = hud.drawClassicIntoHUDs
+    if type(originalClassic) == "function"
+        and type(hud.drawHudGlyph) == "function" then
+      hud.drawClassicIntoHUDs = function(battle, slide, Gender, _, imageSlot)
+        local result = originalClassic(battle, slide, Gender, ratios,
+          imageSlot)
+        local images = type(imageSlot) == "table"
+          and (imageSlot.images or imageSlot) or nil
+        local function drawSide(side, visible)
+          local battler = battle and battle[side]
+          local value = visible and crystalOnlyGender(battler) or nil
+          if not value then return end
+          local level = battler.mon and battler.mon.level or 1
+          local x, y = hud.classicGenderXY(side, level)
+          hud.drawHudGlyph(Gender, value, x, y, images, imageSlot, battle)
+        end
+        drawSide("enemy", type(hud.enemyHudVisible) ~= "function"
+          or hud.enemyHudVisible(battle, slide))
+        drawSide("player", type(hud.playerHudVisible) ~= "function"
+          or hud.playerHudVisible(battle, slide))
+        return result
+      end
+    end
+
+    local originalOverlay = hud.drawOverlay
+    if type(originalOverlay) == "function"
+        and type(hud.drawGlyph) == "function" then
+      hud.drawOverlay = function(battle, Gender, _, imageSlot)
+        local result = originalOverlay(battle, Gender, ratios, imageSlot)
+        if battle and battle.dramaticShapeShot
+            and type(hud.hudDrawnInFrame) == "function"
+            and not hud.hudDrawnInFrame(battle) then
+          return result
+        end
+
+        local wide = wideLayout(battle)
+        local images = type(imageSlot) == "table"
+          and (imageSlot.images or imageSlot) or nil
+        local tint = type(imageSlot) == "table" and imageSlot.tint == true
+        local shakeX, shakeY = 0, 0
+        if type(hud.screenShakeXY) == "function" then
+          shakeX, shakeY = hud.screenShakeXY(battle)
+        end
+        local g = love and love.graphics
+        local renderer = battle and battle.game and battle.game.renderer
+        local uiCanvas = renderer and renderer.canvas
+        local previousCanvas = g and g.getCanvas and g.getCanvas() or nil
+        local pushedCanvas = false
+        if g and uiCanvas and g.setCanvas then
+          local ok = pcall(g.push, "all")
+          if not ok then g.push() end
+          pushedCanvas = true
+          g.setCanvas(uiCanvas)
+          if g.origin then g.origin() end
+        end
+
+        local function drawSide(side, visible)
+          local battler = battle and battle[side]
+          local value = visible and crystalOnlyGender(battler) or nil
+          if not value then return end
+          local level = battler.mon and battler.mon.level or 1
+          local x, y
+          if wide and type(hud.wideGenderXY) == "function" then
+            x, y = hud.wideGenderXY(side, level)
+          else
+            x, y = hud.classicGenderXY(side, level)
+          end
+          local extraX = side == "enemy"
+            and battle.fx and battle.fx.hudShakeX or 0
+          local dx, dy = shakeX + (extraX or 0), shakeY
+          if dx ~= 0 or dy ~= 0 then
+            g.push()
+            g.translate(dx, dy)
+          end
+          hud.drawGlyph(Gender, value, x, y, images, true, tint)
+          if dx ~= 0 or dy ~= 0 then g.pop() end
+        end
+        local slide = 0
+        if battle then
+          local ok, Timing = pcall(require, "src.core.Timing")
+          slide = (battle.introSlide or 0)
+            * (ok and Timing.BATTLE_SLIDE_PX_PER_FRAME or 2)
+        end
+        drawSide("enemy", type(hud.enemyHudVisible) ~= "function"
+          or hud.enemyHudVisible(battle, slide))
+        drawSide("player", type(hud.playerHudVisible) ~= "function"
+          or hud.playerHudVisible(battle, slide))
+
+        if g then g.setColor(1, 1, 1, 1) end
+        if pushedCanvas then
+          g.pop()
+          if previousCanvas then g.setCanvas(previousCanvas)
+          else g.setCanvas() end
+        end
+        return result
+      end
+    end
+
+    hud.battleInfoHudCrystal251GenderV1 = true
+    mod.log:info("unified Crystal 251 and Gender Mod battle markers")
+  end
+
   -- Gender Mod 0.3.5 anchors the player glyph to the stock level row at
   -- y=64. Our player panel moves that level row to y=56, so teach its public
   -- BattleHUD contract the new coordinate while this HUD is enabled. Its
@@ -601,10 +750,11 @@ return function(mod)
   end
 
   local function installGenderBridge(game)
-    local _, hud = genderCompatibility(game)
+    local genderApi, hud = genderCompatibility(game)
     if not hud then return end
     if hud.battleInfoHudCoordinatesV10 then
       installNeutralGenderGuard(hud)
+      installCrystalGenderBridge(game, genderApi, hud)
       return
     end
 
@@ -689,6 +839,7 @@ return function(mod)
     hud.battleInfoHudCoordinatesV10 = true
     mod.log:info("attached HUD coordinates to Gender Mod")
     installNeutralGenderGuard(hud)
+    installCrystalGenderBridge(game, genderApi, hud)
   end
 
   local genderCellLayer
