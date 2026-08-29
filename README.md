@@ -72,6 +72,14 @@ the neutral/unknown `⚲` cell is left empty in battles so unsupported species
 do not gain an unexplained extra symbol. Gender Mod's party and summary screens
 retain their own complete presentation.
 
+When Crystal 251 is enabled with Gender Mod, Battle Info HUD combines their
+battle presentation into one marker. Crystal's own ratio resolver supplies
+Johto genders such as Sentret, Gender Mod supplies the coloured 8×8 artwork,
+and Crystal's separate monochrome sign after the level is omitted. Kanto and
+Johto species therefore share the same before-level placement without a
+duplicate. Switching Battle Info HUD off restores each companion's native
+renderer, and neither companion is required.
+
 Typed Move Colors' Text Only mode is supported in the classic move-selection
 screen. Its native TYPE/PP box remains above the EXP row without a late blue
 fill being restored across it.

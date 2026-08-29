@@ -32,12 +32,22 @@ return function(game)
   game.save.party = { player }
   game.save.pokedex = game.save.pokedex or { seen = {}, owned = {} }
   game.save.pokedex.owned = game.save.pokedex.owned or {}
-  game.save.pokedex.owned.PIDGEY = true
+  local enemySpecies = game.data.pokemon.SENTRET and "SENTRET" or "PIDGEY"
+  game.save.pokedex.owned[enemySpecies] = true
 
   while game.stack:top() do game.stack:pop() end
-  local battle = BattleState.newWild(game, "PIDGEY", 3,
+  local battle = BattleState.newWild(game, enemySpecies, 3,
     { onFinish = function() end })
-  battle.enemy.mon.gender_mod = "F"
+  if enemySpecies == "SENTRET" then
+    -- Crystal 251 owns this ratio. Keep the fixture deterministically female
+    -- while leaving Gender Mod's Kanto-only lock empty so the bridge itself
+    -- has to supply the coloured marker.
+    battle.enemy.mon.dvs.attack = 0
+    battle.enemy.mon.dvs.speed = 0
+    battle.enemy.mon.gender_mod = nil
+  else
+    battle.enemy.mon.gender_mod = "F"
+  end
   game.stack:push(battle)
   U.wait(8)
   battle.introSlide = 0

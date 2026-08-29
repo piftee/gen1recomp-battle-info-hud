@@ -515,6 +515,7 @@ local genderOverlayCalls = {}
 local genderOverlayCoordinateProbe
 local genderOverlayGlyphProbe
 local genderGlyphCalls = {}
+local genderHudGlyphCalls = {}
 local genderHud = {
   classicGenderXY = function(side)
     if side == "enemy" then return 24, 8 end
@@ -546,6 +547,14 @@ genderHud.drawGlyphInk = function(_, gender)
   genderGlyphCalls[#genderGlyphCalls + 1] = "ink:" .. tostring(gender)
   return true
 end
+genderHud.drawHudGlyph = function(_, gender, x, y)
+  genderHudGlyphCalls[#genderHudGlyphCalls + 1] = {
+    gender = gender, x = x, y = y,
+  }
+  return true
+end
+genderHud.enemyHudVisible = function(b) return b and b.enemy ~= nil end
+genderHud.playerHudVisible = function(b) return b and b.player ~= nil end
 genderHud.drawClassicIntoHUDs = function()
   genderHud.drawGlyphInk({}, nil)
   genderHud.drawGlyphInk({}, "F")
@@ -553,7 +562,26 @@ genderHud.drawClassicIntoHUDs = function()
   genderHud.drawGlyph({}, "M")
   return "gender-hud"
 end
-game.mods.exports.gender_mod = { BattleHUD = genderHud }
+local genderRatios = {
+  FIXMON_A = { kind = "ratio", femaleAtkMax = 7 },
+  FIXMON_B = { kind = "ratio", femaleAtkMax = 7 },
+}
+game.mods.exports.gender_mod = {
+  BattleHUD = genderHud,
+  ratios = genderRatios,
+}
+local crystalTrackingCalls = 0
+local crystalGender = {
+  forMon = function(mon)
+    if mon and mon.species == "SENTRET" then return "F" end
+    return nil
+  end,
+  withBattleHudTracking = function(_, draw, ...)
+    crystalTrackingCalls = crystalTrackingCalls + 1
+    return draw(...)
+  end,
+}
+game.mods.exports.CRYSTAL_251 = { crystalGender = crystalGender }
 battle.dramaticShapeShot = nil
 battle.letterboxWhite = true
 Runtime.call("battle.overlay", function() end, battle)
@@ -562,6 +590,11 @@ T.eq(genderHud.drawClassicIntoHUDs(), "gender-hud",
   "Gender Mod's native battle pass result is preserved")
 T.same(genderGlyphCalls, { "ink:F", "color:M" },
   "battle passes omit neutral gender art but retain male and female markers")
+T.eq(crystalGender.withBattleHudTracking(battle,
+    function() return "hud-draw" end), "hud-draw",
+  "Crystal 251's duplicate text marker is bypassed while both HUD providers are active")
+T.eq(crystalTrackingCalls, 0,
+  "the Crystal 251 text tracker does not append a second gender symbol")
 genderGlyphCalls = {}
 genderHud.drawGlyph({}, nil)
 T.same(genderGlyphCalls, { "color:nil" },
@@ -624,14 +657,27 @@ T.eq(battle.enemy.shownStatus, "SLP",
 T.eq(battle.player.shownStatus, "PSN",
   "Gender compatibility restores player status after drawing")
 
+local originalEnemySpecies = battle.enemy.mon.species
+battle.enemy.mon.species = "SENTRET"
+genderGlyphCalls = {}
+genderHud.drawOverlay(battle, {}, genderRatios, { images = {} })
+T.same(genderGlyphCalls, { "color:F" },
+  "a Crystal-only species receives one coloured Gender Mod marker")
+battle.enemy.mon.species = originalEnemySpecies
+
 rows[2].step(game, 1)
 gx, gy = genderHud.classicGenderXY("player", battle.player.mon.level)
 T.same({ gx, gy }, { 104, 64 },
   "OFF restores Gender Mod's stock player coordinate")
 genderHud.drawOverlay(battle)
-T.same(genderOverlayCalls[2], {
+T.same(genderOverlayCalls[3], {
   enemyStatus = "SLP", playerStatus = "PSN",
 }, "OFF restores Gender Mod's native status suppression behavior")
+T.eq(crystalGender.withBattleHudTracking(battle,
+    function() return "crystal-native" end), "crystal-native",
+  "OFF restores Crystal 251's native gender tracking")
+T.eq(crystalTrackingCalls, 1,
+  "OFF allows Crystal 251 to append its own native marker again")
 rows[2].step(game, 1)
 
 battle.dramaticShapeShot = { live = true }

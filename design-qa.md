@@ -174,11 +174,31 @@ Dramatic Shape animation variation and does not change HUD geometry.
   paths. Neutral calls are absent inside battle passes, M/F calls remain, and
   a neutral call outside the battle scope still reaches Gender Mod.
 
+## 2026-08-29 Crystal 251 duplicate gender provider
+
+- Follow-up evidence: Pidgey displayed Gender Mod's pink female marker before
+  `:L3` and a second black female sign after the level. Sentret displayed only
+  the black sign. This showed that the visible mark was not one fallback path.
+- Cause: Crystal 251 wraps battle font draws and appends its own monochrome
+  gender sign after level text for all 251 species. Gender Mod independently
+  draws coloured before-level art, but its bundled ratio table contains only
+  the original 151. The two providers therefore duplicated Kanto genders and
+  disagreed on Johto presentation.
+- Fix: while Battle Info HUD, Gender Mod and Crystal 251 are all active, the
+  Crystal text tracker is bypassed and Crystal-only M/F values are painted
+  through Gender Mod's existing battle glyph path. Kanto remains owned by
+  Gender Mod; genderless and unresolved species keep an empty cell.
+- Evidence: 124 automated checks cover Kanto ownership, Crystal-only Sentret,
+  the live OFF restoration and battle-pass neutral suppression. Rendered
+  classic and WIDE captures show one pink female tile before Sentret's level
+  and no second black sign.
+
 ## Residual test gap
 
-Visual QA covered macOS and Dramatic Shape 1.7.2 at 1024 × 768. Automated
-tests cover WIDE rendering, the live option toggle, palette behavior,
-opponent ordering, panel expansion and texture/canvas restoration. Mobile and
-VR-specific placement were not visually sampled.
+Visual QA covered macOS at 1024 × 768, including a live Crystal 251 0.11.5 +
+Gender Mod 0.3.5 Sentret battle, and Dramatic Shape 1.7.2. Automated tests cover
+WIDE rendering, the live option toggle, palette behavior, opponent ordering,
+panel expansion and texture/canvas restoration. Mobile and VR-specific
+placement were not visually sampled.
 
 final result: passed
