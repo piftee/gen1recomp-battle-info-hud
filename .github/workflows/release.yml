@@ -26,6 +26,7 @@ jobs:
 
           files = [
               "CHANGELOG.md",
+              "gen2.lua",
               "LICENSE",
               "README.md",
               "hud.lua",
