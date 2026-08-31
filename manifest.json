@@ -1,9 +1,10 @@
 {
   "id": "battle_info_hud",
   "name": "Battle Info HUD",
-  "version": "0.8.9",
+  "version": "0.9.0",
   "github": "piftee/gen1recomp-battle-info-hud",
   "api": 2,
+  "games": ["gen1", "gen2"],
   "entry": "main.lua",
   "profile": "content",
   "game_version": ">=0.0.0-dev <1.0.0",
