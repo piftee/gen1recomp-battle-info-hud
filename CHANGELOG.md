@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.9.0 - 2026-08-31
+
+- Added a dedicated Gold, Silver and Crystal battle presenter while retaining
+  the complete native Gen 2 battlefield as one intact scene.
+- Wide displays now expand only the command and coloured-move controls, with a
+  unified lower panel and a two-line prompt that does not cross into FIGHT.
+- Kept Gen 2's native EXP track unchanged and removed the redundant floating
+  EXP label from the wider player HUD.
+- Preserved the complete current Gen 1 renderer, including the 0.8.9 Gender
+  Mod and Crystal 251 compatibility fixes.
+
 ## 0.8.9 - 2026-08-29
 
 - Unified Gender Mod 0.3.5 and Crystal 251 gender rendering in battle HUDs.

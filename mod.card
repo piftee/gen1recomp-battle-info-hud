@@ -1,5 +1,5 @@
 return {
-  summary = "Optional battle information added to the existing native HUD.",
+  summary = "Optional battle information added to the existing native HUDs.",
   author = "ishhodaszi",
   tags = { "ui", "quality-of-life", "cosmetic", "battle" },
   differences = {
@@ -14,6 +14,7 @@ return {
       "The native Poké Ball tile directly beside the opponent name for caught species",
       "Gender Mod 0.3.5 alignment for the raised player level row",
       "A single coloured gender marker for Crystal 251's Johto species when Gender Mod is present",
+      "A dedicated Gen 2 wide command and move presentation around the intact native battle scene",
       "One BATTLE INFO on/off setting in the standard Options menu",
     },
     known = {
@@ -26,6 +27,7 @@ return {
       "Packaged mobile battles do not require Lua's optional debug library",
       "Text-only move-colour overlays keep the native TYPE/PP box clear of the EXP fill",
       "The existing HUD is enhanced in classic, WIDE and legacy staged layouts; Battle Art 1.8+ keeps its native staged pipeline",
+      "Gold, Silver and Crystal retain their complete native battlefield and EXP track",
       "Uses engine_internals to draw with Gen1Recomp's font and HUD tiles",
     },
   },

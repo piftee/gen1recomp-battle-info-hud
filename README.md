@@ -4,6 +4,10 @@ Battle Info HUD adds the missing battle-reading information to Gen1Recomp's
 existing battle HUD. It preserves the original panels, curves, font and HUD
 tiles instead of replacing them with a new interface.
 
+Gold, Silver and Crystal use a dedicated Gen 2 adapter that keeps their native
+battlefield intact while expanding only the command and move controls on wider
+displays.
+
 ## Install
 
 1. Download the `.zip` from the
@@ -15,7 +19,7 @@ tiles instead of replacing them with a new interface.
    WIDE layout and supported staged voxel presentations automatically.
 
 The ZIP contains only the mod. You still need your own legally obtained
-Pokémon Red, Blue or Yellow ROM imported into
+Pokémon Red, Blue, Yellow, Gold, Silver or Crystal ROM imported into
 [Gen1Recomp](https://github.com/bryanthaboi/gen1recomp).
 
 The mod is enabled by default after installation. Use **BATTLE INFO → OFF** in
@@ -34,6 +38,8 @@ The same switch is also available on the mod's own options page.
   same content grid, while opponent status sits to the right of its level
 - keeps Gender Mod's player marker beside the raised level row instead of over
   the HP meter, including when a status condition is visible
+- keeps Gen 2's complete battlefield and native EXP track intact while giving
+  wider command and move screens a unified lower panel and wrapped prompt
 
 No additional HUD boxes or replacement panels are drawn.
 
@@ -83,6 +89,12 @@ renderer, and neither companion is required.
 Typed Move Colors' Text Only mode is supported in the classic move-selection
 screen. Its native TYPE/PP box remains above the EXP row without a late blue
 fill being restored across it.
+
+On Gold, Silver and Crystal the generation-specific adapter presents the
+engine's native battle scene once, rather than stitching or cropping separate
+HUD regions. At wider aspect ratios the command grid, selected-move details
+and prompt use the additional space without moving battle animations or
+placing a second EXP label beside the player HUD.
 
 This package contains no ROM or ROM-derived assets. Pokémon and related names
 are trademarks of their respective owners; this is an unofficial fan mod.

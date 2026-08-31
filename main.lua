@@ -7,6 +7,10 @@ return function(mod)
   }
   mod.options:define(optionSchema)
 
+  local GameVersion = require("src.core.GameVersion")
+  local generation = type(GameVersion.generation) == "function"
+    and GameVersion.generation() or 1
+
   local function setOption(game, value)
     local options = game and game.save and game.save.options
     if options then
@@ -42,6 +46,13 @@ return function(mod)
     }
     return out
   end)
+
+  -- Gold, Silver and Crystal use their own battle screen. Keep the mature
+  -- Gen 1 renderer completely unchanged and install the native Gen 2 overlay
+  -- only on a generation-2 boot.
+  if generation == 2 then
+    return require("mods.battle_info_hud.gen2")(mod)
+  end
 
   local source, readErr = mod:read("hud.lua")
   if not source then
