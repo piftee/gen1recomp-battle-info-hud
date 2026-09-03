@@ -1,5 +1,8 @@
 # Battle Info HUD
 
+> [!IMPORTANT]
+> **This standalone mod has been superseded by [Modern UI Suite](https://github.com/piftee/gen1recomp-modern-ui-suite).** It remains available for existing installs, but future fixes and features will be maintained in the suite. Disable this standalone mod before enabling the suite; the suite imports its saved settings automatically.
+
 Battle Info HUD adds the missing battle-reading information to Gen1Recomp's
 existing battle HUD. It preserves the original panels, curves, font and HUD
 tiles instead of replacing them with a new interface.
